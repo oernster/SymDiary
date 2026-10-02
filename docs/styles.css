@@ -234,8 +234,12 @@ a {
   background: var(--surface);
 }
 
+/* The frame hugs the screenshot, so a column wider than the image never shows
+   a band of the frame's own ground beside it; on a narrower one it shrinks. */
 .shot.wide {
   margin-top: 54px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 figure {
