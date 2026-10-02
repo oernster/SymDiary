@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SymDiary features: one list, one sheet, your own words</title>
+<meta name="description" content="What SymDiary does: every entry in one list you can narrow and correct; a PDF sheet of your own words grouped by symptom; symptom names it remembers and offers back."/>
+<link rel="icon" href="application-icon.png"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="bar">
+    <div class="wrap">
+        <a class="mark" href="./"><img src="application-icon.png" alt=""/>SymDiary</a>
+        <nav>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <button type="button" class="toggle" id="theme-toggle" title="Change the appearance">
+                <img id="theme-face" src="light-mode.png" alt="Switch to light mode"/>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main>
+
+<section id="features">
+    <div class="wrap">
+        <div class="eyebrow">Features</div>
+        <h2>What SymDiary does</h2>
+        <p class="intro">Everything you write stays in one list; the sheet you save
+            from it carries your own words and nothing else. Each part is below,
+            beside a picture of the screen it happens on.</p>
+    </div>
+</section>
+
+<section id="history">
+    <div class="wrap">
+        <h2>Everything you have written, in one list</h2>
+        <div class="split">
+            <div>
+                <p class="intro">Narrow it to a stretch of dates, to one symptom or
+                    to one severity when you want to look something up. Correct an
+                    entry that came out wrong; remove one you did not mean to keep.</p>
+                <ul class="plain-list">
+                    <li><strong>It asks before it deletes</strong> and names exactly
+                        what will go.</li>
+                    <li><strong>Nothing is hidden from you.</strong> The list is the
+                        record; there is no other copy of it anywhere.</li>
+                </ul>
+            </div>
+            <figure class="shot">
+                <img src="screenshots/history.png" alt="The history list with two recorded events, above filters for dates, symptoms and severity."/>
+            </figure>
+        </div>
+    </div>
+</section>
+
+<section id="sheet">
+    <div class="wrap">
+        <h2>What your doctor actually sees</h2>
+        <p class="intro">Your own words, grouped by symptom, with the times you wrote
+            them down. Nothing else.</p>
+        <div class="split">
+            <figure class="shot">
+                <img src="screenshots/receipt.png" alt="The symptom record, listing each symptom with its events, severities and notes."/>
+            </figure>
+            <div>
+                <ul class="plain-list">
+                    <li><strong>No scores and no charts.</strong> Counting your
+                        entries is the only arithmetic it does.</li>
+                    <li><strong>No opinion.</strong> It never suggests what any of it
+                        might mean; it never says one thing led to another.</li>
+                    <li><strong>Your wording, untouched.</strong> "I took a couple of
+                        paracetamol" goes on the sheet as you typed it, not
+                        translated into medical language.</li>
+                    <li><strong>It says what it is.</strong> Above the first entry the
+                        sheet states that this is not a diagnosis; it is one person's
+                        own notes, printed for a healthcare professional to read.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="words">
+    <div class="wrap">
+        <h2>It keeps your words, not its own</h2>
+        <div class="split">
+            <div>
+                <p class="intro">The first time you write "Tiredness" it remembers
+                    the word and offers it back the next time, so the same thing is
+                    not filed under four spellings by December. If you would rather
+                    call it something else, rename it and every entry follows.</p>
+            </div>
+            <figure class="shot">
+                <img src="screenshots/symptoms.png" alt="The symptoms screen, listing Headache and Tiredness with a Rename button beside each."/>
+            </figure>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <div class="links">
+            <a href="./">Home</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
+            <a href="https://github.com/oernster/SymDiary/blob/main/LICENSE">Licence</a>
+            <a href="https://ernster.dev/commercial-licensing.html">Commercial licensing</a>
+            <a href="https://ernster.dev">More of my work</a>
+        </div>
+        <p>SymDiary is free software under the GNU General Public Licence, version 3.
+            You may use it, study it, share it and change it; anything you pass on
+            carries the same freedoms.</p>
+        <p>SymDiary records what you type and gives it back to you. It does not
+            diagnose and it makes no claim about what your notes mean.</p>
+        <p>&#169; Oliver Ernster</p>
+    </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>

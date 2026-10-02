@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Get SymDiary for Windows, macOS and Linux</title>
+<meta name="description" content="Download SymDiary for Windows, macOS or Linux. Free and open source under the GNU GPL-3.0 licence, with no licence key and no paid tier."/>
+<link rel="icon" href="application-icon.png"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="bar">
+    <div class="wrap">
+        <a class="mark" href="./"><img src="application-icon.png" alt=""/>SymDiary</a>
+        <nav>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <button type="button" class="toggle" id="theme-toggle" title="Change the appearance">
+                <img id="theme-face" src="light-mode.png" alt="Switch to light mode"/>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main>
+
+<section id="get">
+    <div class="wrap">
+        <div class="eyebrow">Get SymDiary</div>
+        <h2>Download SymDiary</h2>
+        <p class="intro">Pick your platform and you have the newest release. Free
+            and open source under the GNU GPL-3.0 licence, with no licence key and
+            no paid tier.</p>
+        <span class="dl-version" id="dl-version">Latest release</span>
+        <!--
+            Every button points at GitHub's releases/latest/download redirect, which
+            always serves the newest release's file. The names carry no version, so
+            these links cannot go stale. site.js adds the version and the file sizes
+            when it can reach the API; without it the page still says everything
+            that matters.
+        -->
+        <div class="downloads">
+            <div class="dl-card">
+                <div class="ico">&#x1FA9F;</div>
+                <h3>Windows</h3>
+                <p class="req">Windows 10 or 11, 64-bit</p>
+                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/SymDiarySetup.exe">Download for Windows</a>
+                <p class="meta" data-asset="SymDiarySetup.exe">Setup program (.exe)</p>
+                <p class="meta">Windows may show a SmartScreen warning when you run
+                    it: <a href="https://ernster.dev/windows-smartscreen.html">here is why</a>.</p>
+                <p class="how">It installs for you alone, so Windows never asks for
+                    an administrator. Run it again later to update, repair or
+                    uninstall.</p>
+            </div>
+            <div class="dl-card">
+                <div class="ico">&#x1F34E;</div>
+                <h3>macOS</h3>
+                <p class="req">Apple Silicon, M1 or later</p>
+                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/SymDiary.dmg">Download for macOS</a>
+                <p class="meta" data-asset="SymDiary.dmg">Disk image (.dmg)</p>
+                <p class="meta">Signed and notarized with Apple, so it opens without
+                    a fight.</p>
+                <p class="how">Open the disk image and drag SymDiary into
+                    Applications.</p>
+            </div>
+            <div class="dl-card">
+                <div class="ico">&#x1F427;</div>
+                <h3>Linux</h3>
+                <p class="req">Any distribution with Flatpak</p>
+                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/symdiary.flatpak">Download for Linux</a>
+                <p class="meta" data-asset="symdiary.flatpak">Flatpak bundle (.flatpak)</p>
+                <p class="meta">It runs from your applications menu like anything
+                    else.</p>
+                <p class="how">Install it with <code>flatpak install symdiary.flatpak</code>.</p>
+            </div>
+        </div>
+        <p class="dl-links">
+            <a id="dl-whats-new" href="https://github.com/oernster/SymDiary/releases/latest">What is new in this release</a>
+            &nbsp;&middot;&nbsp;
+            <a href="https://github.com/oernster/SymDiary/releases">All releases</a>
+            &nbsp;&middot;&nbsp;
+            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
+        </p>
+    </div>
+</section>
+
+<section id="support">
+    <div class="wrap">
+        <h2>Supporting it</h2>
+        <div class="donate">
+            <a class="donate-mark" href="https://www.paypal.com/ncp/payment/4XP3AYNMPQGUC"><img src="donate.png" alt="Donate to SymDiary"/></a>
+            <div>
+                <p class="intro donate-words">SymDiary is free and stays free. Nothing
+                    is held back behind a donation. If it has saved you an afternoon
+                    or made an appointment go better, there is a button in the bar;
+                    there is also one here.</p>
+                <a class="button plain" href="https://www.paypal.com/ncp/payment/4XP3AYNMPQGUC">Buy me a coffee</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <div class="links">
+            <a href="./">Home</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
+            <a href="https://github.com/oernster/SymDiary/blob/main/LICENSE">Licence</a>
+            <a href="https://ernster.dev/commercial-licensing.html">Commercial licensing</a>
+            <a href="https://ernster.dev">More of my work</a>
+        </div>
+        <p>SymDiary is free software under the GNU General Public Licence, version 3.
+            You may use it, study it, share it and change it; anything you pass on
+            carries the same freedoms.</p>
+        <p>SymDiary records what you type and gives it back to you. It does not
+            diagnose and it makes no claim about what your notes mean.</p>
+        <p>&#169; Oliver Ernster</p>
+    </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>

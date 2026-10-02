@@ -14,10 +14,9 @@
     <div class="wrap">
         <a class="mark" href="./"><img src="application-icon.png" alt=""/>SymDiary</a>
         <nav>
-            <a href="#how">How it works</a>
-            <a href="#sheet" class="hide-small">What it saves</a>
-            <a href="#private">Your computer</a>
-            <a href="#get">Get it</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
             <button type="button" class="toggle" id="theme-toggle" title="Change the appearance">
                 <img id="theme-face" src="light-mode.png" alt="Switch to light mode"/>
             </button>
@@ -35,8 +34,8 @@
         what you felt and when you felt it, then save the whole lot as a PDF to take to your
         next appointment with a doctor, a nurse or whoever you are seeing.</p>
     <div class="actions">
-        <a class="button primary" href="#get">Get SymDiary</a>
-        <a class="button plain" href="#sheet">See what it saves</a>
+        <a class="button primary" href="download.html#get">Get SymDiary</a>
+        <a class="button plain" href="features.html#sheet">See what it saves</a>
     </div>
     <p class="under">Free, open source, with no network connection opened at all.</p>
 
@@ -44,19 +43,6 @@
         <img src="screenshots/record.png" alt="The SymDiary window showing the recording form: a symptom, a severity, a note and the time."/>
     </figure>
 </div>
-
-<section id="why">
-    <div class="wrap">
-        <h2>Ten minutes is not long enough to remember.</h2>
-        <p class="intro">By the time the appointment comes round, the details have
-            gone soft. Was it three mornings last week or five? Did it start before
-            the new tablets or after them? You end up saying "quite often, I think",
-            which is the least useful sentence in the room.</p>
-        <p class="intro">A notebook solves this. SymDiary is that notebook, kept
-            somewhere you will not leave it on a train, with the times filled in for
-            you and a tidy document at the end.</p>
-    </div>
-</section>
 
 <section id="how">
     <div class="wrap">
@@ -89,196 +75,15 @@
     </div>
 </section>
 
-<section id="history">
-    <div class="wrap">
-        <h2>Everything you have written, in one list</h2>
-        <div class="split">
-            <div>
-                <p class="intro">Narrow it to a stretch of dates, to one symptom or
-                    to one severity when you want to look something up. Correct an
-                    entry that came out wrong; remove one you did not mean to keep.</p>
-                <ul class="plain-list">
-                    <li><strong>It asks before it deletes</strong> and names exactly
-                        what will go.</li>
-                    <li><strong>Nothing is hidden from you.</strong> The list is the
-                        record; there is no other copy of it anywhere.</li>
-                </ul>
-            </div>
-            <figure class="shot">
-                <img src="screenshots/history.png" alt="The history list with two recorded events, above filters for dates, symptoms and severity."/>
-            </figure>
-        </div>
-    </div>
-</section>
-
-<section id="sheet">
-    <div class="wrap">
-        <h2>What your doctor actually sees</h2>
-        <p class="intro">Your own words, grouped by symptom, with the times you wrote
-            them down. Nothing else.</p>
-        <div class="split">
-            <figure class="shot">
-                <img src="screenshots/receipt.png" alt="The symptom record, listing each symptom with its events, severities and notes."/>
-            </figure>
-            <div>
-                <ul class="plain-list">
-                    <li><strong>No scores and no charts.</strong> Counting your
-                        entries is the only arithmetic it does.</li>
-                    <li><strong>No opinion.</strong> It never suggests what any of it
-                        might mean; it never says one thing led to another.</li>
-                    <li><strong>Your wording, untouched.</strong> "I took a couple of
-                        paracetamol" goes on the sheet as you typed it, not
-                        translated into medical language.</li>
-                    <li><strong>It says what it is.</strong> Above the first entry the
-                        sheet states that this is not a diagnosis; it is one person's
-                        own notes, printed for a healthcare professional to read.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="words">
-    <div class="wrap">
-        <h2>It keeps your words, not its own</h2>
-        <div class="split">
-            <div>
-                <p class="intro">The first time you write "Tiredness" it remembers
-                    the word and offers it back the next time, so the same thing is
-                    not filed under four spellings by December. If you would rather
-                    call it something else, rename it and every entry follows.</p>
-            </div>
-            <figure class="shot">
-                <img src="screenshots/symptoms.png" alt="The symptoms screen, listing Headache and Tiredness with a Rename button beside each."/>
-            </figure>
-        </div>
-    </div>
-</section>
-
-<section id="private">
-    <div class="wrap">
-        <h2>It stays on your computer</h2>
-        <p class="intro">Health notes are about as personal as writing gets, so
-            SymDiary does not send them anywhere. It cannot: the program opens no
-            network connection at all; a test in the source forbids the
-            networking code outright.</p>
-        <ul class="plain-list">
-            <li><strong>No account.</strong> Nothing to sign up for, nothing to sign
-                in to, no email address wanted.</li>
-            <li><strong>No cloud and no syncing.</strong> The record is one file on
-                your machine, where your documents are.</li>
-            <li><strong>No adverts and no tracking.</strong> Nobody is counting what
-                you write or how often you open it.</li>
-            <li><strong>Yours to take away.</strong> Export the whole record to a
-                plain file whenever you like, then read it back in.</li>
-        </ul>
-        <p class="note">Said plainly, because it matters: SymDiary does not encrypt
-            the file. It is protected the way the rest of your documents are, by the
-            account you sign in to on your own computer. If other people use that
-            account, they can read it.</p>
-    </div>
-</section>
-
-<section id="not">
-    <div class="wrap">
-        <h2>What it will not do</h2>
-        <p class="intro">A program about symptoms is usually assumed to do a few of
-            these. SymDiary does none of them, on purpose.</p>
-        <ul class="plain-list">
-            <li>It does not diagnose, suggest conditions or recommend treatment.</li>
-            <li>It does not interpret your notes, score them or rank them.</li>
-            <li>It does not rewrite what you wrote into medical terminology.</li>
-            <li>It does not remind you or nag you to record anything.</li>
-            <li>It is not a substitute for talking to a healthcare professional; it
-                is something to bring with you when you do.</li>
-        </ul>
-        <p class="note">It opens dark and there is a Light mode button in the bar;
-            press it once and it opens that way from then on. It will not change
-            under you because the desktop reached dusk.</p>
-    </div>
-</section>
-
-<section id="get">
-    <div class="wrap">
-        <div class="eyebrow">Get SymDiary</div>
-        <h2>Download SymDiary</h2>
-        <p class="intro">Pick your platform and you have the newest release. Free
-            and open source under the GNU GPL-3.0 licence, with no licence key and
-            no paid tier.</p>
-        <span class="dl-version" id="dl-version">Latest release</span>
-        <!--
-            Every button points at GitHub's releases/latest/download redirect, which
-            always serves the newest release's file. The names carry no version, so
-            these links cannot go stale. site.js adds the version and the file sizes
-            when it can reach the API; without it the page still says everything
-            that matters.
-        -->
-        <div class="downloads">
-            <div class="dl-card">
-                <div class="ico">&#x1FA9F;</div>
-                <h3>Windows</h3>
-                <p class="req">Windows 10 or 11, 64-bit</p>
-                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/SymDiarySetup.exe">Download for Windows</a>
-                <p class="meta" data-asset="SymDiarySetup.exe">Setup program (.exe)</p>
-                <p class="meta">Windows may show a SmartScreen warning when you run
-                    it: <a href="https://ernster.dev/windows-smartscreen.html">here is why</a>.</p>
-                <p class="how">It installs for you alone, so Windows never asks for
-                    an administrator. Run it again later to update, repair or
-                    uninstall.</p>
-            </div>
-            <div class="dl-card">
-                <div class="ico">&#x1F34E;</div>
-                <h3>macOS</h3>
-                <p class="req">Apple Silicon, M1 or later</p>
-                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/SymDiary.dmg">Download for macOS</a>
-                <p class="meta" data-asset="SymDiary.dmg">Disk image (.dmg)</p>
-                <p class="meta">Signed and notarized with Apple, so it opens without
-                    a fight.</p>
-                <p class="how">Open the disk image and drag SymDiary into
-                    Applications.</p>
-            </div>
-            <div class="dl-card">
-                <div class="ico">&#x1F427;</div>
-                <h3>Linux</h3>
-                <p class="req">Any distribution with Flatpak</p>
-                <a class="primary" href="https://github.com/oernster/SymDiary/releases/latest/download/symdiary.flatpak">Download for Linux</a>
-                <p class="meta" data-asset="symdiary.flatpak">Flatpak bundle (.flatpak)</p>
-                <p class="meta">It runs from your applications menu like anything
-                    else.</p>
-                <p class="how">Install it with <code>flatpak install symdiary.flatpak</code>.</p>
-            </div>
-        </div>
-        <p class="dl-links">
-            <a id="dl-whats-new" href="https://github.com/oernster/SymDiary/releases/latest">What is new in this release</a>
-            &nbsp;&middot;&nbsp;
-            <a href="https://github.com/oernster/SymDiary/releases">All releases</a>
-            &nbsp;&middot;&nbsp;
-            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
-        </p>
-    </div>
-</section>
-
-<section id="support">
-    <div class="wrap">
-        <h2>Supporting it</h2>
-        <div class="donate">
-            <a class="donate-mark" href="https://www.paypal.com/ncp/payment/4XP3AYNMPQGUC"><img src="donate.png" alt="Donate to SymDiary"/></a>
-            <div>
-                <p class="intro donate-words">SymDiary is free and stays free. Nothing
-                    is held back behind a donation. If it has saved you an afternoon
-                    or made an appointment go better, there is a button in the bar;
-                    there is also one here.</p>
-                <a class="button plain" href="https://www.paypal.com/ncp/payment/4XP3AYNMPQGUC">Buy me a coffee</a>
-            </div>
-        </div>
-    </div>
-</section>
-
 </main>
 
 <footer>
     <div class="wrap">
         <div class="links">
+            <a href="./">Home</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
             <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
             <a href="https://github.com/oernster/SymDiary/blob/main/LICENSE">Licence</a>
             <a href="https://ernster.dev/commercial-licensing.html">Commercial licensing</a>

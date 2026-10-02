@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Why SymDiary: your notes, on your own computer</title>
+<meta name="description" content="Why a symptom diary helps at an appointment; why SymDiary keeps everything on your own computer with no network connection; what it will not do, on purpose."/>
+<link rel="icon" href="application-icon.png"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<header class="bar">
+    <div class="wrap">
+        <a class="mark" href="./"><img src="application-icon.png" alt=""/>SymDiary</a>
+        <nav>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <button type="button" class="toggle" id="theme-toggle" title="Change the appearance">
+                <img id="theme-face" src="light-mode.png" alt="Switch to light mode"/>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main>
+
+<section id="why">
+    <div class="wrap">
+        <div class="eyebrow">Why</div>
+        <h2>Ten minutes is not long enough to remember.</h2>
+        <p class="intro">By the time the appointment comes round, the details have
+            gone soft. Was it three mornings last week or five? Did it start before
+            the new tablets or after them? You end up saying "quite often, I think",
+            which is the least useful sentence in the room.</p>
+        <p class="intro">A notebook solves this. SymDiary is that notebook, kept
+            somewhere you will not leave it on a train, with the times filled in for
+            you and a tidy document at the end.</p>
+    </div>
+</section>
+
+<section id="private">
+    <div class="wrap">
+        <h2>It stays on your computer</h2>
+        <p class="intro">Health notes are about as personal as writing gets, so
+            SymDiary does not send them anywhere. It cannot: the program opens no
+            network connection at all; a test in the source forbids the
+            networking code outright.</p>
+        <ul class="plain-list">
+            <li><strong>No account.</strong> Nothing to sign up for, nothing to sign
+                in to, no email address wanted.</li>
+            <li><strong>No cloud and no syncing.</strong> The record is one file on
+                your machine, where your documents are.</li>
+            <li><strong>No adverts and no tracking.</strong> Nobody is counting what
+                you write or how often you open it.</li>
+            <li><strong>Yours to take away.</strong> Export the whole record to a
+                plain file whenever you like, then read it back in.</li>
+        </ul>
+        <p class="note">Said plainly, because it matters: SymDiary does not encrypt
+            the file. It is protected the way the rest of your documents are, by the
+            account you sign in to on your own computer. If other people use that
+            account, they can read it.</p>
+    </div>
+</section>
+
+<section id="not">
+    <div class="wrap">
+        <h2>What it will not do</h2>
+        <p class="intro">A program about symptoms is usually assumed to do a few of
+            these. SymDiary does none of them, on purpose.</p>
+        <ul class="plain-list">
+            <li>It does not diagnose, suggest conditions or recommend treatment.</li>
+            <li>It does not interpret your notes, score them or rank them.</li>
+            <li>It does not rewrite what you wrote into medical terminology.</li>
+            <li>It does not remind you or nag you to record anything.</li>
+            <li>It is not a substitute for talking to a healthcare professional; it
+                is something to bring with you when you do.</li>
+        </ul>
+        <p class="note">It opens dark and there is a Light mode button in the bar;
+            press it once and it opens that way from then on. It will not change
+            under you because the desktop reached dusk.</p>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <div class="links">
+            <a href="./">Home</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="download.html">Get it</a>
+            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
+            <a href="https://github.com/oernster/SymDiary/blob/main/LICENSE">Licence</a>
+            <a href="https://ernster.dev/commercial-licensing.html">Commercial licensing</a>
+            <a href="https://ernster.dev">More of my work</a>
+        </div>
+        <p>SymDiary is free software under the GNU General Public Licence, version 3.
+            You may use it, study it, share it and change it; anything you pass on
+            carries the same freedoms.</p>
+        <p>SymDiary records what you type and gives it back to you. It does not
+            diagnose and it makes no claim about what your notes mean.</p>
+        <p>&#169; Oliver Ernster</p>
+    </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>
