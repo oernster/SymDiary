@@ -501,7 +501,7 @@ that does not resolve is a requirement nobody can check.
 - Priority: Must
 - Requirement: When SymDiary starts while another instance is running for the
   same user, the new instance shall bring the running window forward and exit.
-- Verified by: a manual check with two copies started; the lock is Wails' own and needs two real processes, so no test covers it (TESTING.md lists it)
+- Verified by: a manual check with two copies started; the lock is Wails' own and needs two real processes, so no test covers it; it is checked by hand in a real build
 
 **FR-065 Log**
 - Priority: Must

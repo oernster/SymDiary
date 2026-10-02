@@ -158,8 +158,8 @@ it; nothing else holds one.
 3. `./build.ps1` and check the gate is green.
 4. Launch the built executable and use it: record, save a PDF, export, import.
 5. Run `dist-installer/SymDiarySetup.exe` and walk each route: install, reopen
-   for manage, repair, then uninstall. The checks only a person can settle are
-   listed in [TESTING.md](TESTING.md).
+   for manage, repair, then uninstall, then run the checks only a person can
+   settle; [TESTING.md](TESTING.md) says which kinds of behaviour those cover.
 6. Commit, tag and publish. Those are the owner's to run.
 
 To try setup without installing onto your own machine, start it with the two
