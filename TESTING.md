@@ -24,7 +24,9 @@ It runs these in order, stopping at the first failure:
 10. `node --check` over every script in `installer/frontend/dist`. The setup
     page has no build step, so nothing else parses it and a typo there reaches a
     user as a window that draws no screen at all. It is neither a lint nor a
-    type check; `TECH_DEBT.md` says what is still missing.
+    type check: `tests/structural/setuppage_test.go` covers the rest, holding
+    every element the scripts look up to the markup and every field they read
+    to what the setup facade sends.
 
 `./test.ps1 -SkipFrontend` runs the Go half alone while working on it.
 
@@ -152,4 +154,5 @@ rather than the second quietly replacing the first.
 - [DEVELOPMENT.md](DEVELOPMENT.md): building from source.
 - [REQUIREMENTS.md](REQUIREMENTS.md): each requirement names the test that
   verifies it.
+- [DECISIONS-TRADEOFFS.md](DECISIONS-TRADEOFFS.md): the decisions the product rests on and what each costs.
 - [TECH_DEBT.md](TECH_DEBT.md): what is still open, what is deliberately left and what only looks like debt.

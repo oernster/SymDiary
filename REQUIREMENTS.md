@@ -737,7 +737,7 @@ Verified by the same boundary test plus a dependency review in `go.mod` and
 `package.json`.
 
 **NFR-PRIV-003 Encryption at rest**: The record is not encrypted at rest; it is
-protected by the Windows account only. This non-claim shall be stated in the
+protected by the user's own account only. This non-claim shall be stated in the
 README (Q-6).
 
 **NFR-REL-001 Crash safety**: An event reported as recorded shall survive a

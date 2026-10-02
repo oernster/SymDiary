@@ -85,6 +85,7 @@ One service per user-visible action, over the ports in `ports.go`.
 | `export` | The JSON export file: a versioned format, an atomic write and a distrustful read. |
 | `runlog` | The run log, plus pointing the process's error output at it before anything can fail. Ported from WhatDay. |
 | `pdf` | The document a reader takes to an appointment: a pure layout answering the rows of each page, then a renderer that turns a row into ink. |
+| `windowfocus` | Handing the page the keyboard as the window opens: on Windows it finds the child window WebView2 draws the page in and focuses it; elsewhere it does nothing. |
 | `setup` | The per-user install policy: the paths, the fenced payload extraction, the version comparison, the registry entry, the shortcuts and the process work. The setup program is a facade over it and owns no install logic. |
 
 ### The document: `internal/infrastructure/pdf`
@@ -164,6 +165,10 @@ its own storage.
 
 ## Decisions and why
 
+The decisions as they bear on the code. The product-level record of what was
+chosen, what was given up and what each costs is
+[DECISIONS-TRADEOFFS.md](DECISIONS-TRADEOFFS.md).
+
 | Decision | Why | What it costs |
 |---|---|---|
 | The receipt's lines are built in the domain, not the page. | The one thing SymDiary must never do is add words to a medical record. A test asserts every line is a title, a range, a heading, a count, a recorded field or one of the two framing lines. | The page cannot reflow a line; it styles by kind. |
@@ -174,7 +179,7 @@ its own storage.
 | An edit sends no time unless the user changed it. | An empty time means "keep what is held", so an edit cannot move an occurrence to the moment of the edit. The rule is structural rather than remembered. | The edit form compares before sending. |
 | A record that will not open becomes `store.Unavailable`. | The window opens and says what is wrong, instead of a program that never appears. Every action answers with the same reason. | Eight one-line methods that refuse. |
 | Times are stored as RFC 3339 with their offset. | The instant reads back as the same instant; an export carries the offset it was written in. | Ordering happens in Go rather than in SQL. |
-| No encryption at rest. | A passphrase is a thing to lose; the Windows account already guards the file. Stated in the README rather than assumed. | Anyone who can sign in as the user can read the record. |
+| No encryption at rest. | A passphrase is a thing to lose; the user's own account already guards the file. Stated in the README rather than assumed. | Anyone who can sign in as the user can read the record. |
 | SymDiary opens dark and carries its own switch, rather than following Windows. | A window that changes under the reader because the desktop reached dusk is a surprise; a button in the bar is one press away and what it chooses is remembered. The palette is held to AA in both modes by a test either way. | The page owns a preference, so the tokens hang off an attribute rather than a media query; the setup program carries the same button so the two cannot disagree. |
 | The Guide and About read themselves down, gently, until the reader takes over. | Long help holds still on open, descends a pixel every second tick, holds at the tail and rewinds; any wheel, press, key or focus arrival suspends it for 2.5 seconds and it then resumes from wherever the reader left it. The pace belongs to the application rather than to either dialog. | A timer per open dialog, plus a pure state machine to keep the pacing testable without waiting. |
 | The focus ring is answered by the page, not left to the browser. | The browser has an opinion about Tab and none about the arrows, so the house model (Tab and Right forward, Shift+Tab and Left back, wrapping at both ends) has to be stated. It is split in two: the rules are a pure module under test; one listener drives them against the page. | One key listener at the shell, plus a text field that has to be asked for its arrows back rather than assumed. |
@@ -234,4 +239,5 @@ sample fails naming the file to commit.
 - [REQUIREMENTS.md](REQUIREMENTS.md): the requirements these invariants serve.
 - [TESTING.md](TESTING.md): how it is verified.
 - [DEVELOPMENT.md](DEVELOPMENT.md): how it is built.
+- [DECISIONS-TRADEOFFS.md](DECISIONS-TRADEOFFS.md): the decisions the product rests on and what each costs.
 - [TECH_DEBT.md](TECH_DEBT.md): what is still open, what is deliberately left and what only looks like debt.

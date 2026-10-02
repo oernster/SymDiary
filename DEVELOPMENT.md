@@ -10,7 +10,7 @@ Every command here is PowerShell, run from the repository root.
 | Node 20+ with npm | The page | https://nodejs.org/ |
 | Wails v2 CLI | Building the window | `go install github.com/wailsapp/wails/v2/cmd/wails@latest` |
 | WebView2 runtime | Running the window | Ships with Windows 11 |
-| Python 3 with Pillow | Regenerating the icons | `python -m pip install pillow` |
+| Python 3 with Pillow | Regenerating the icons; stamping the site (Python alone) | `python -m pip install pillow` |
 
 Versions measured on the reference machine on 2026-09-22: Go 1.26.3, Wails
 v2.12.0, Node 24.11.1.
@@ -28,7 +28,8 @@ In order, it:
 3. Runs `wails build -ldflags "-X main.appVersion=<version>"`, which installs
    the front-end dependencies, builds the page and compiles the application.
 4. Checks the executable is there and prints its path and size.
-5. Zips `build/bin` into `installer/payload.zip`.
+5. Copies `LICENSE` beside the executable, so the licence lands in the install
+   folder, then zips `build/bin` into `installer/payload.zip`.
 6. Builds the setup program from `installer/`, with the same version flag.
 7. Copies it to `dist-installer/SymDiarySetup.exe`, then puts the empty-zip
    placeholder back in `installer/payload.zip`, so a payload of megabytes never
@@ -124,6 +125,27 @@ it in the bar cannot drift apart.
 
 Run it whenever a master changes.
 
+## The website
+
+The site is plain HTML under `docs/`, served by GitHub Pages: a home page plus
+Features, Why and Get it, sharing `styles.css` and `site.js`. Each page links
+those two files with a hash of their content, so a browser fetches the new file
+the moment it changes rather than pairing a new page with a cached old
+stylesheet. After editing either file:
+
+```powershell
+python stamp_assets.py
+```
+
+It rewrites only the links whose hash has changed, says which pages it touched
+and leaves an up-to-date site alone. The hash reads CRLF as LF, so a Windows
+checkout and the copy GitHub serves agree.
+
+No version is written into the site. Every download button points at the
+newest release's files and `site.js` asks GitHub for that release's version
+and file sizes as the page opens; without an answer the page still reads
+correctly.
+
 ## Versioning
 
 `VERSION` at the root is the only place a version is written. The build reads
@@ -164,4 +186,5 @@ which its own uninstall removes again.
 - [ARCHITECTURE.md](ARCHITECTURE.md): the invariants.
 - [TESTING.md](TESTING.md): the gate and the floors.
 - [REQUIREMENTS.md](REQUIREMENTS.md): what it must do.
+- [DECISIONS-TRADEOFFS.md](DECISIONS-TRADEOFFS.md): the decisions the product rests on and what each costs.
 - [TECH_DEBT.md](TECH_DEBT.md): what is still open, what is deliberately left and what only looks like debt.

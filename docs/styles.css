@@ -522,24 +522,21 @@ section .intro {
   outline: none;
 }
 
-.donate {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  flex-wrap: wrap;
-}
-
-/* The mark is 239 by 208, so a square box would squash it. It is scaled by
-   height alone and keeps its own width, exactly as the copy in the window's
-   bar is. */
-.donate-mark {
+/* The donate button carries its artwork before its label. The mark is sized in
+   em against the button's own type, so the two stay in proportion; at one line
+   box it could not be read, so it takes 2.7 times that and the button is
+   deliberately taller than a text-only one. It is scaled by height alone and
+   keeps its own width. display: block drops the inline descender space that
+   would otherwise add a stray couple of pixels under the picture. */
+.btn-donate {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
 }
 
-.donate img {
+.btn-donate img {
   display: block;
-  height: 96px;
+  height: 2.7em;
   width: auto;
 }
 
