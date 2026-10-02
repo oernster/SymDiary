@@ -131,6 +131,8 @@ is never cut that way.
 - [TESTING.md](TESTING.md): the gate, the floors and what only a person can
   check.
 - [DEVELOPMENT.md](DEVELOPMENT.md): building from source.
+- [`DECISIONS-TRADEOFFS.md`](DECISIONS-TRADEOFFS.md) sets out the decisions
+  SymDiary rests on, with what each one gains and what it costs.
 - [TECH_DEBT.md](TECH_DEBT.md): what is still open, what is deliberately left and what only looks like debt.
 
 ## Supporting the project
