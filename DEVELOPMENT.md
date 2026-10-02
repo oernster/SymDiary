@@ -9,7 +9,7 @@ Every command here is PowerShell, run from the repository root.
 | Go 1.26+ | The application | https://go.dev/dl/ |
 | Node 20+ with npm | The page | https://nodejs.org/ |
 | Wails v2 CLI | Building the window | `go install github.com/wailsapp/wails/v2/cmd/wails@latest` |
-| WebView2 runtime | Running the window | Ships with Windows 11 |
+| WebView2 runtime | Running the window | Ships with Windows 11; on Windows 10 the application offers to install it when it is missing |
 | Python 3 with Pillow | Regenerating the icons; stamping the site (Python alone) | `python -m pip install pillow` |
 
 Versions measured on the reference machine on 2026-09-22: Go 1.26.3, Wails
