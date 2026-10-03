@@ -233,13 +233,14 @@ h1 {
   font-weight: 600;
 }
 
-.severities {
+/* A row of radio choices under one legend: severity, the receipt's range. */
+.choices {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 16px;
 }
 
-.severities legend {
+.choices legend {
   margin-bottom: 4px;
 }
 

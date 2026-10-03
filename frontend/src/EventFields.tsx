@@ -40,7 +40,7 @@ export function EventFields({ idPrefix, values, onChange, severities, refused, s
           inputRef={symptomRef}
         />
       </div>
-      <fieldset className="field severities">
+      <fieldset className="field choices">
         <legend>Severity</legend>
         {['', ...severities].map((severity) => (
           <label key={severity || 'none'} className="choice">

@@ -2,10 +2,18 @@
 // PDF the reader keeps (FR-040 to FR-044). Every word on it comes from the
 // backend's receipt; the page only lays it out on screen, while the document
 // itself is drawn by Go so that it reads the same on every desktop.
+//
+// The range can start at the last appointment the user marked (FR-046). That
+// only fills in the two dates: the record is asked for exactly as it is for
+// dates chosen by hand, so the sheet cannot tell the two apart.
 
 import { useEffect, useState } from 'react'
 import { api, type ReceiptLine, type Refused } from './api'
+import {
+  appointmentKey, heldAppointment, rangeLabels, sinceAppointment, type RangeChoice,
+} from './appointment'
 import crest from './assets/icons/application-icon.png'
+import { keepStored, readStored } from './storage'
 
 interface Props {
   refused: Refused
@@ -33,18 +41,58 @@ function isLetterhead(line: ReceiptLine, index: number): boolean {
 }
 
 export function ReceiptPane({ refused, saved }: Props) {
+  const [today, setToday] = useState('')
+  const [appointment, setAppointment] = useState('')
+  const [choice, setChoice] = useState<RangeChoice>('custom')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [lines, setLines] = useState<ReceiptLine[]>([])
 
+  /** chooseSince sets the range to the appointment's day through today. */
+  const chooseSince = (held: string, now: string) => {
+    const [start, end] = sinceAppointment(held, now)
+    setChoice('since')
+    setFrom(start)
+    setTo(end)
+  }
+
   useEffect(() => {
     void api.now(refused).then((now) => {
       if (!now) return
-      const today = now.slice(0, 10)
-      setTo(today)
-      setFrom(daysBefore(today, defaultDays))
+      const date = now.slice(0, 10)
+      const held = heldAppointment(readStored(appointmentKey), date)
+      setToday(date)
+      setAppointment(held)
+      if (held) {
+        chooseSince(held, date)
+      } else {
+        setTo(date)
+        setFrom(daysBefore(date, defaultDays))
+      }
     })
   }, [refused])
+
+  /**
+   * markAppointment keeps the date marked, else forgets it when the field is
+   * cleared. A date still to come is not an appointment that has happened, so
+   * it is held as none.
+   */
+  const markAppointment = (value: string) => {
+    const held = heldAppointment(value, today)
+    keepStored(appointmentKey, held || null)
+    setAppointment(held)
+    if (held) {
+      chooseSince(held, today)
+    } else {
+      setChoice('custom')
+    }
+  }
+
+  /** A date changed by hand is a custom range, whatever it was before. */
+  const setByHand = (set: (value: string) => void) => (value: string) => {
+    setChoice('custom')
+    set(value)
+  }
 
   const show = async () => {
     setLines([])
@@ -63,10 +111,33 @@ export function ReceiptPane({ refused, saved }: Props) {
       <h1 id="receipt-title">Symptom record</h1>
       <div className="receipt-controls">
         <label>
-          From <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          Last appointment <input type="date" value={appointment} max={today}
+            onChange={(e) => markAppointment(e.target.value)} />
+        </label>
+        {appointment && (
+          <fieldset className="field choices">
+            <legend>Range</legend>
+            {(['since', 'custom'] as const).map((kind) => (
+              <label key={kind} className="choice">
+                <input
+                  type="radio"
+                  name="receipt-range"
+                  value={kind}
+                  checked={choice === kind}
+                  onChange={() => (kind === 'since' ? chooseSince(appointment, today) : setChoice(kind))}
+                />
+                {rangeLabels[kind]}
+              </label>
+            ))}
+          </fieldset>
+        )}
+      </div>
+      <div className="receipt-controls">
+        <label>
+          From <input type="date" value={from} onChange={(e) => setByHand(setFrom)(e.target.value)} />
         </label>
         <label>
-          To <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          To <input type="date" value={to} onChange={(e) => setByHand(setTo)(e.target.value)} />
         </label>
         <button type="button" onClick={show}>Show the record</button>
         <button type="button" className="primary" disabled={lines.length === 0}

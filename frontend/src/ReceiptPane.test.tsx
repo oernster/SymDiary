@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { appointmentKey } from './appointment'
 import { ReceiptPane, daysBefore } from './ReceiptPane'
 import { aReceipt, installBridge } from './bridge-fake'
 
@@ -117,5 +118,108 @@ describe('the receipt', () => {
     expect(daysBefore('2026-09-22', 30)).toBe('2026-08-23')
     expect(daysBefore('2026-01-05', 30)).toBe('2025-12-06')
     expect(daysBefore('2026-03-01', 1)).toBe('2026-02-28')
+  })
+})
+
+describe('since the last appointment', () => {
+  afterEach(() => {
+    window.localStorage.clear()
+    vi.restoreAllMocks()
+  })
+
+  const since = () => screen.getByRole('radio', { name: 'Since last appointment' })
+  const custom = () => screen.getByRole('radio', { name: 'Custom dates' })
+
+  it('offers no choice of range until an appointment is marked', async () => {
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
+    expect(screen.queryAllByRole('radio')).toHaveLength(0)
+  })
+
+  it('opens on the range since the appointment and asks for exactly those dates', async () => {
+    // The acceptance example of FR-046: the record asked for is the one the
+    // same two dates give when typed by hand, so the sheet cannot differ.
+    window.localStorage.setItem(appointmentKey, '2026-09-02')
+    const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+
+    await waitFor(() => expect(since()).toBeChecked())
+    expect(screen.getByLabelText(/Last appointment/)).toHaveValue('2026-09-02')
+    expect(screen.getByLabelText(/From/)).toHaveValue('2026-09-02')
+    expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await waitFor(() => expect(bridge.Receipt).toHaveBeenCalledWith('2026-09-02', '2026-09-22'))
+  })
+
+  it('remembers an appointment marked here and starts the range on it', async () => {
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
+
+    fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '2026-09-10' } })
+
+    expect(window.localStorage.getItem(appointmentKey)).toBe('2026-09-10')
+    expect(since()).toBeChecked()
+    expect(screen.getByLabelText(/From/)).toHaveValue('2026-09-10')
+  })
+
+  it('becomes custom when a date is changed by hand; back again on request', async () => {
+    window.localStorage.setItem(appointmentKey, '2026-09-02')
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(since()).toBeChecked())
+
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-08-01' } })
+    expect(custom()).toBeChecked()
+
+    fireEvent.click(since())
+    expect(screen.getByLabelText(/From/)).toHaveValue('2026-09-02')
+    expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22')
+  })
+
+  it('forgets the appointment when the field is cleared', async () => {
+    window.localStorage.setItem(appointmentKey, '2026-09-02')
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(since()).toBeChecked())
+
+    fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '' } })
+
+    expect(window.localStorage.getItem(appointmentKey)).toBeNull()
+    expect(screen.queryAllByRole('radio')).toHaveLength(0)
+  })
+
+  it('treats an appointment still to come as none', async () => {
+    window.localStorage.setItem(appointmentKey, '2026-10-01')
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
+    expect(screen.queryAllByRole('radio')).toHaveLength(0)
+  })
+
+  it('still opens when storage refuses to be read', async () => {
+    // Nothing kept in the window is worth a dead pane: a refusal is no
+    // appointment, which leaves the range the pane always had.
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage is not available')
+    })
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
+  })
+
+  it('still marks an appointment when storage refuses to be written', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage is full')
+    })
+    installBridge({})
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
+
+    fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '2026-09-10' } })
+    // The pane uses it; only the remembering was lost.
+    expect(since()).toBeChecked()
   })
 })

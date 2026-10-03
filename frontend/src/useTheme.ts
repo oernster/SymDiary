@@ -4,31 +4,15 @@
 // element says otherwise, so this hook only ever sets one attribute.
 
 import { useCallback, useEffect, useState } from 'react'
-import { defaultTheme, nextTheme, storedTheme, themeKey, type Theme } from './theme'
+import { keepStored, readStored } from './storage'
+import { nextTheme, storedTheme, themeKey, type Theme } from './theme'
 
 /**
- * The theme remembered in this window, else the default.
- *
- * Storage can refuse both reading and writing: a window opened with site data
- * blocked answers by throwing rather than by answering nothing. A theme is not
- * worth a dead page, so a refusal leaves the default showing and the choice
- * lasting only as long as the window.
+ * The theme remembered in this window, else the default. Storage that refuses
+ * to be read holds nothing, which is the default too.
  */
 export function rememberedTheme(): Theme {
-  try {
-    return storedTheme(window.localStorage.getItem(themeKey))
-  } catch {
-    return defaultTheme
-  }
-}
-
-/** remember keeps the choice for the next opening, where it can. */
-function remember(theme: Theme): void {
-  try {
-    window.localStorage.setItem(themeKey, theme)
-  } catch {
-    // Nothing to do and nothing to say: the window is already wearing it.
-  }
+  return storedTheme(readStored(themeKey))
 }
 
 /**
@@ -48,7 +32,7 @@ export function useTheme(): [Theme, () => void] {
   const toggle = useCallback(() => {
     setTheme((current) => {
       const wanted = nextTheme(current)
-      remember(wanted)
+      keepStored(themeKey, wanted)
       return wanted
     })
   }, [])

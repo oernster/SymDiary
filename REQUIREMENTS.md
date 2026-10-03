@@ -440,6 +440,32 @@ that does not resolve is a requirement nobody can check.
 - Verified by: `internal/domain/receipt_test.go::TestTheFramingOpensTheRecord`,
   `TestTheFramingIsTheSameWhateverTheRecord`
 
+**FR-046 Since last appointment** (Amendment 18)
+- Priority: Should
+- Requirement: The receipt pane shall let the user mark one date, today or
+  earlier, as their last appointment. While one is held, the pane shall offer
+  two ranges, `Since last appointment` (from that date to today, both
+  included) and `Custom dates`; it shall open on the first. While none is held,
+  it shall offer custom dates alone, opening on the last thirty days as before.
+  Changing either date by hand makes the range custom.
+- The receipt and the saved document shall be exactly those for the same two
+  dates chosen by hand: the choice fills the range and nothing else. The sheet
+  never mentions an appointment, so FR-041, FR-042 and FR-045 are untouched.
+- An appointment is a date boundary, not an event and not part of the record.
+  It lives in the window's own storage beside the theme (FR-073), so it is
+  neither exported nor imported. Storage that refuses to be read holds no
+  appointment. A value that is not a date is none as well; so is a date still
+  to come.
+- Nothing prompts the user to mark one (section 1.3: no prompts).
+- Acceptance: Given a last appointment of 2 Sep 2026 on 22 Sep 2026, the pane
+  opens on `Since last appointment` with the range 2 Sep to 22 Sep and asks for
+  the receipt of exactly those dates. Given none, it opens on 23 Aug to 22 Sep
+  and offers no choice of range.
+- Verified by: `frontend/src/appointment.test.ts`;
+  `frontend/src/ReceiptPane.test.tsx`, "since the last appointment". Proved
+  to bite by planting a future appointment let through and a range starting
+  the day after.
+
 ### 3.5 Functional requirements: export
 
 **FR-050 Export**
@@ -933,6 +959,7 @@ named beside it.
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 18 | 2026-10-03 | New FR-046, FR-068 | The receipt pane holds the date of the last appointment and offers `Since last appointment` beside `Custom dates`. The Guide says so. | Owner's request. The product exists for the walk from recording to the appointment; the date of the last one is the boundary a person reaches for. Typing it again each time is friction with nothing to show for it. Owner's rulings the same day: the date lives in the window's storage rather than the record, so the record stays observations alone and the export format stays at version 1; the appointment's own day is included, since an event seen twice costs the reader nothing while an afternoon event left off costs something; one date, today or earlier, so it stays a boundary rather than becoming a calendar. The sheet is unchanged: the MHRA caveat in 4.1 concerns features that enhance the data presented; the data presented is identical. |
 | 17 | 2026-10-02 | Section 2.3 | Windows 10 joins Windows 11 as a supported system, 64-bit on both. Where the WebView2 runtime is missing or older than 94.0.992.31, the application and the setup program each offer to download and install it through Microsoft's bootstrapper before their window opens; declining leaves them unopened. | Owner's decision: the download page says Windows 10 or 11. Windows 10 does not always carry WebView2, which Windows 11 does. The behaviour above is Wails' default `download` strategy, read from the v2.12.0 source (`internal/wv2installer`); `build.ps1` chooses no other. It has not yet been run on a Windows 10 machine. |
 | 16 | 2026-09-23 | FR-040, FR-045 | The record is no longer printed through the window's browser. The application draws it as a PDF and the reader chooses where it goes; the button reads Save PDF. | Owner's decision after the browser path was measured on all three desktops and gave three different answers. A page belongs to whichever engine the desktop ships, so what came off the paper depended on that engine, on whether the reader had "Headers and footers" ticked in their print dialog and on which of the CSS the sheet leaned on that engine had implemented. Windows was made correct and measured; Linux and macOS were, in the owner's words, a mess. The record is the product, so it is drawn once, in Go, where the same bytes reach every reader. What that buys beyond consistency: pagination that never splits an event across two sheets, a page number on every page, a document the suite can measure rather than one only a printer can. The typeface is the Go fonts, carried inside the binary, because a PDF's built-in fonts can say nothing outside Latin-1 and a note holding a curly quote or an accented name would have reached a doctor with the user's own words mangled. |
 | 15 | 2026-09-23 | FR-045 | Every printed page carries `Page N of M` at its foot. | Owner's request. A page counter can live nowhere but an @page margin box, so the foot of the sheet takes the one page margin there is while the top and sides keep none. Measured through the engine WebView2 runs, driving the print with the browser's own header and footer switched ON, which the command line cannot ask for and the devtools protocol can: a ten page record printed `Page 1 of 10` through `Page 10 of 10` and carried none of the browser's date, address or page count. Declaring a margin box is what suppresses them; the same record with no margin at all prints neither. Also measured: `counter(page)` resolves to 0 anywhere but a margin box, in the table foot and in a fixed element alike, so there is no way to number the pages of a sheet with no margin. The paper size is still left alone: that ten page print came off US Letter. |
