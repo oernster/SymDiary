@@ -7,7 +7,7 @@ import { aReceipt, installBridge } from './bridge-fake'
 describe('the receipt', () => {
   it('opens on the last thirty days, ending today', async () => {
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
 
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
     expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23')
@@ -18,7 +18,7 @@ describe('the receipt', () => {
 
   it('shows every line the backend gave it; nothing else', async () => {
     installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
 
     const record = await screen.findByLabelText('The symptom record')
@@ -30,7 +30,7 @@ describe('the receipt', () => {
     // The framing (FR-045) is styled by its kind, so a line that loses its kind
     // loses the separation on paper while still reading correctly here.
     installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
 
     const record = await screen.findByLabelText('The symptom record')
@@ -47,7 +47,7 @@ describe('the receipt', () => {
     // produced it. It belongs to the opening line alone, so its place is
     // asserted rather than only its presence.
     installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
 
     const record = await screen.findByLabelText('The symptom record')
@@ -70,7 +70,7 @@ describe('the receipt', () => {
       SavePDF: vi.fn(() => Promise.resolve('C:/Users/x/Downloads/record.pdf')),
     })
     const saved = vi.fn()
-    render(<ReceiptPane refused={vi.fn()} saved={saved} />)
+    render(<ReceiptPane refused={vi.fn()} saved={saved} revision={0} />)
     expect(screen.getByRole('button', { name: 'Save PDF' })).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
@@ -94,7 +94,7 @@ describe('the receipt', () => {
       SavePDF: vi.fn(() => Promise.resolve('')),
     })
     const saved = vi.fn()
-    render(<ReceiptPane refused={vi.fn()} saved={saved} />)
+    render(<ReceiptPane refused={vi.fn()} saved={saved} revision={0} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save PDF' })).toBeEnabled())
 
@@ -107,7 +107,7 @@ describe('the receipt', () => {
     installBridge({
       Receipt: vi.fn(() => Promise.reject(new Error('no events were recorded in that range'))),
     })
-    render(<ReceiptPane refused={refused} saved={vi.fn()} />)
+    render(<ReceiptPane refused={refused} saved={vi.fn()} revision={0} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
 
     await waitFor(() => expect(refused).toHaveBeenCalledWith('No events were recorded in that range'))
@@ -118,7 +118,7 @@ describe('the receipt', () => {
     // Without this the record on screen and the one Save PDF writes can be two
     // different ranges: the save asks for the dates in the fields.
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
 
     // Nothing is asked for until the reader asks to see the record.
@@ -137,7 +137,7 @@ describe('the receipt', () => {
   it('clears the record when the new range holds nothing, then follows again', async () => {
     const refused = vi.fn()
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={refused} saved={vi.fn()} />)
+    render(<ReceiptPane refused={refused} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
     await screen.findByLabelText('The symptom record')
@@ -155,7 +155,7 @@ describe('the receipt', () => {
 
   it('never lets a slow answer for an earlier range overwrite the current one', async () => {
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
     await screen.findByLabelText('The symptom record')
@@ -191,7 +191,7 @@ describe('since the last appointment', () => {
 
   it('offers no choice of range until an appointment is marked', async () => {
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
   })
@@ -201,7 +201,7 @@ describe('since the last appointment', () => {
     // same two dates give when typed by hand, so the sheet cannot differ.
     window.localStorage.setItem(appointmentKey, '2026-09-02')
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
 
     await waitFor(() => expect(since()).toBeChecked())
     expect(screen.getByLabelText(/Last appointment/)).toHaveValue('2026-09-02')
@@ -217,7 +217,7 @@ describe('since the last appointment', () => {
 
   it('remembers an appointment marked here and starts the range on it', async () => {
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
 
     fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '2026-09-10' } })
@@ -230,7 +230,7 @@ describe('since the last appointment', () => {
   it('becomes custom when a date is changed by hand; back again on request', async () => {
     window.localStorage.setItem(appointmentKey, '2026-09-02')
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(since()).toBeChecked())
 
     fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-08-01' } })
@@ -244,7 +244,7 @@ describe('since the last appointment', () => {
   it('forgets the appointment when the field is cleared', async () => {
     window.localStorage.setItem(appointmentKey, '2026-09-02')
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(since()).toBeChecked())
 
     fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '' } })
@@ -256,7 +256,7 @@ describe('since the last appointment', () => {
   it('treats an appointment still to come as none', async () => {
     window.localStorage.setItem(appointmentKey, '2026-10-01')
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
   })
@@ -267,7 +267,7 @@ describe('since the last appointment', () => {
       Receipt: vi.fn(() => Promise.resolve(aReceipt)),
       SavePDF: vi.fn(() => Promise.resolve('C:/Users/x/Downloads/record.pdf')),
     })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(since()).toBeChecked())
     const onSheet = screen.getByRole('checkbox', { name: 'Show on the sheet' })
     expect(onSheet).toBeChecked()
@@ -289,7 +289,7 @@ describe('since the last appointment', () => {
   it('names the appointment inside a wider range; never outside one', async () => {
     window.localStorage.setItem(appointmentKey, '2026-09-02')
     const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(since()).toBeChecked())
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
     await screen.findByLabelText('The symptom record')
@@ -315,7 +315,7 @@ describe('since the last appointment', () => {
       throw new Error('storage is not available')
     })
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
   })
 
@@ -324,7 +324,7 @@ describe('since the last appointment', () => {
       throw new Error('storage is full')
     })
     installBridge({})
-    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} revision={0} />)
     await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
 
     fireEvent.change(screen.getByLabelText(/Last appointment/), { target: { value: '2026-09-10' } })

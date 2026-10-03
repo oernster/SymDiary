@@ -163,10 +163,14 @@ func readVersioned(raw []byte) (application.Record, error) {
 	return read(raw)
 }
 
-// record converts the file's shape to a record, refusing any unreadable field.
+// record converts the file's shape to a record, refusing any unreadable field and any blank symptom,
+// whether it arrives on an event or on a definition kept with none.
 func (shape fileShape) record() (application.Record, error) {
 	var record application.Record
 	for i, definition := range shape.Definitions {
+		if err := domain.CheckLabel(definition.Label); err != nil {
+			return application.Record{}, fmt.Errorf("definition %d: %w", i+1, err)
+		}
 		used, err := time.Parse(timeLayout, definition.LastUsed)
 		if err != nil {
 			return application.Record{}, fmt.Errorf("definition %d: %w", i+1, err)

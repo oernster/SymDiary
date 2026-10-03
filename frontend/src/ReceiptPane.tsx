@@ -20,6 +20,8 @@ interface Props {
   refused: Refused
   /** saved says where the document went, once it has gone there. */
   saved: (message: string) => void
+  /** Changes whenever the record changes from outside the pane; a record showing is asked for again. */
+  revision: number
 }
 
 /** defaultDays is how far back the range starts when the pane opens. */
@@ -41,7 +43,7 @@ function isLetterhead(line: ReceiptLine, index: number): boolean {
   return index === 0 && line.kind === 'provenance'
 }
 
-export function ReceiptPane({ refused, saved }: Props) {
+export function ReceiptPane({ refused, saved, revision }: Props) {
   const [today, setToday] = useState('')
   const [appointment, setAppointment] = useState('')
   const [choice, setChoice] = useState<RangeChoice>('custom')
@@ -121,7 +123,10 @@ export function ReceiptPane({ refused, saved }: Props) {
     return () => {
       current = false
     }
-  }, [asked, from, to, named, refused])
+    // revision is a dependency for the same reason the dates are: Save PDF
+    // writes what the store holds now, so an import beneath a record showing has
+    // to reach the screen too.
+  }, [asked, from, to, named, refused, revision])
 
   const show = () => setAsked((count) => count + 1)
 

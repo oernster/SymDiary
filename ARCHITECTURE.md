@@ -104,8 +104,12 @@ geometry and a Measurer, it answers the rows of each page. Nothing in it opens
 a file or knows what a PDF is, so what lands on which page is settled by tests
 that draw nothing. `sheet.go` is the renderer around it and owns no layout
 decisions beyond turning a row into ink. Two rules are worth stating because
-they are what a browser could not be made to keep: an event is never split
-across two sheets; every page says which page it is.
+they are what a browser could not be made to keep: an event that fits on a page
+is never split across two sheets; every page says which page it is. An event
+too tall for any page continues onto the next, which opens with its time again,
+so nothing written is lost to the layout. Before anything is drawn, `glyphs.go`
+refuses a record holding a character the carried typeface cannot print, so a
+sheet never shows an empty box where the person's words were.
 
 ### UI: the root package and `frontend/`
 

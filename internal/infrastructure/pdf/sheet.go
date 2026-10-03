@@ -39,8 +39,13 @@ type Sheet struct {
 	Mark []byte
 }
 
-// Write draws the record at path, answering how many pages it came to.
+// Write draws the record at path, answering how many pages it came to. A record
+// holding a character the typeface cannot draw is refused before anything is
+// written (see Check).
 func (s Sheet) Write(path string, lines []domain.Line) (int, error) {
+	if err := s.Check(lines); err != nil {
+		return 0, err
+	}
 	doc := newDoc()
 	pages := Pages(lines, fontWidths{doc: doc})
 	total := len(pages)

@@ -13,6 +13,8 @@ interface Props {
   severities: string[]
   refused: Refused
   tell: (text: string) => void
+  /** Changes whenever the record changes from outside the pane; the list is read again. */
+  revision: number
 }
 
 const noFilter: Filter = { from: '', to: '', definitions: [], severities: [] }
@@ -27,7 +29,7 @@ interface Pending {
   ids: number[]
 }
 
-export function HistoryPane({ severities, refused, tell }: Props) {
+export function HistoryPane({ severities, refused, tell, revision }: Props) {
   const [filter, setFilter] = useState<Filter>(noFilter)
   const [symptoms, setSymptoms] = useState<Definition[]>([])
   const [events, setEvents] = useState<EventEntry[]>([])
@@ -45,9 +47,11 @@ export function HistoryPane({ severities, refused, tell }: Props) {
     setChosen([])
   }, [filter, refused])
 
+  // revision is read only to say when to load again: an import beneath the
+  // pane changes what the list holds without changing the filter.
   useEffect(() => {
     void load()
-  }, [load])
+  }, [load, revision])
 
   const askToDelete = async (ids: number[]) => {
     const prompt = await api.deletionPrompt(ids, refused)

@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"image/color"
 	"image/png"
@@ -9,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"golang.org/x/image/font/gofont/gobold"
+	"golang.org/x/image/font/gofont/goregular"
 
 	"github.com/oernster/symdiary/internal/domain"
 )
@@ -127,6 +131,73 @@ func TestARecordOfNothingIsRefusedRatherThanWritten(t *testing.T) {
 	}
 	if _, statErr := os.Stat(path); statErr == nil {
 		t.Error("a file was left behind for a record holding nothing")
+	}
+}
+
+func TestCharactersTheTypefaceCannotPrintAreRefusedByName(t *testing.T) {
+	t.Parallel()
+	// The typeface carried in the binary covers Latin, Greek and Cyrillic. A
+	// character outside it used to print as an empty box, so a note written in
+	// Chinese reached the doctor as a row of boxes while the window showed it
+	// whole. Refusing while naming what cannot be printed is the honest answer.
+	lines := append(aRecord(1), domain.Line{Kind: domain.LineNote, Text: "头痛 after lunch 😀"})
+	path := filepath.Join(t.TempDir(), "record.pdf")
+
+	pages, err := Sheet{}.Write(path, lines)
+
+	if !errors.Is(err, ErrUnprintable) {
+		t.Fatalf("Write = %v, want ErrUnprintable", err)
+	}
+	for _, character := range []string{"头", "痛", "😀"} {
+		if !strings.Contains(err.Error(), character) {
+			t.Errorf("the refusal %q does not name %s", err, character)
+		}
+	}
+	if pages != 0 {
+		t.Errorf("a refused record answered %d pages", pages)
+	}
+	if _, statErr := os.Stat(path); statErr == nil {
+		t.Error("a document was written for a record it could not print")
+	}
+}
+
+func TestARefusalNamesTheFirstFewAndCountsTheRest(t *testing.T) {
+	t.Parallel()
+	text := "一二三四五六七八九十百千万"
+	err := (Sheet{}).Check([]domain.Line{{Kind: domain.LineNote, Text: text}})
+
+	if !errors.Is(err, ErrUnprintable) {
+		t.Fatalf("Check = %v, want ErrUnprintable", err)
+	}
+	if !strings.Contains(err.Error(), "一 二 三") || !strings.Contains(err.Error(), "(and 3 more)") {
+		t.Errorf("the refusal reads %q, want the first %d named and the rest counted", err, mostNamed)
+	}
+	if strings.Contains(err.Error(), "万") {
+		t.Errorf("the refusal reads %q, naming past the first %d", err, mostNamed)
+	}
+}
+
+func TestATypefaceThatCannotBeReadIsReportedNotTrusted(t *testing.T) {
+	t.Parallel()
+	// The typeface is carried in the binary, so this is a build defect rather
+	// than something a reader meets. Taking an unreadable typeface to cover
+	// every character would let the empty boxes back in, so it says so instead.
+	lines := aRecord(1)
+	for name, faces := range map[string][2][]byte{
+		"regular": {[]byte("not a typeface"), gobold.TTF},
+		"bold":    {goregular.TTF, []byte("not a typeface")},
+	} {
+		if err := checkGlyphs(lines, faces[0], faces[1]); err == nil || errors.Is(err, ErrUnprintable) {
+			t.Errorf("an unreadable %s weight answered %v, want it reported", name, err)
+		}
+	}
+}
+
+func TestTheTypefacePrintsTheEuropeanScripts(t *testing.T) {
+	t.Parallel()
+	note := "Müde, Straße, łódź, Усталость, κόπωση, 38.5°C, ½ dose, € spent, → better, “quoted”"
+	if err := (Sheet{}).Check(append(aRecord(1), domain.Line{Kind: domain.LineNote, Text: note})); err != nil {
+		t.Errorf("Check refused text the typeface carries: %v", err)
 	}
 }
 

@@ -54,15 +54,86 @@ func TestALongNoteWrapsToThePage(t *testing.T) {
 	}
 }
 
-func TestAWordWiderThanThePageIsLeftWhole(t *testing.T) {
+func TestAWordWiderThanTheLineIsBrokenAtTheLine(t *testing.T) {
 	t.Parallel()
-	// It is something the user typed. Running into the margin is a worse look
-	// and a better record than cutting their word in half.
+	// It was once left whole, on the reasoning that running into the margin is a
+	// worse look and a better record than cutting a word in half. Measured, it
+	// did not run into the margin: a long address ran off the paper, so the end
+	// of what the user typed was not on the sheet at all. Breaking it keeps every
+	// character on the page.
 	long := strings.Repeat("z", 400)
-	pages := Pages([]domain.Line{{Kind: domain.LineNote, Text: long}}, evenWidths{})
+	// A short word first: the long one must start a row of its own, so the text
+	// already on the line is kept as a row rather than joined to the break.
+	pages := Pages([]domain.Line{{Kind: domain.LineNote, Text: "see " + long}}, evenWidths{})
 
-	if len(pages[0]) != 1 || pages[0][0].Text != long {
-		t.Errorf("a %d character word came out as %d rows", len(long), len(pages[0]))
+	width := PageWidth - 2*marginSide - styles[domain.LineNote].indent
+	rows := pages[0]
+	for _, row := range rows {
+		if drawn := (evenWidths{}).WidthOf(row.Text, row.Style.size, row.Style.bold); drawn > width {
+			t.Errorf("a row is %.1fmm wide, past the %.1fmm the line holds", drawn, width)
+		}
+	}
+	if len(rows) < 3 || rows[0].Text != "see" {
+		t.Fatalf("laid out as %d row(s) opening %q, want \"see\" then the word broken", len(rows), rows[0].Text)
+	}
+	var rebuilt strings.Builder
+	for _, row := range rows[1:] {
+		rebuilt.WriteString(row.Text)
+	}
+	if rebuilt.String() != long {
+		t.Error("the broken word is not the word that went in")
+	}
+}
+
+func TestANoteKeepsItsLineBreaks(t *testing.T) {
+	t.Parallel()
+	// The window shows a note's lines as the user wrote them; the sheet must too,
+	// or a list of observations prints as one run-on sentence.
+	note := "Morning: dizzy.\r\nEvening: fine.\n\n- took nothing\n"
+	pages := Pages([]domain.Line{{Kind: domain.LineNote, Text: note}}, evenWidths{})
+
+	var got []string
+	for _, row := range pages[0] {
+		got = append(got, row.Text)
+	}
+	want := []string{"Morning: dizzy.", "Evening: fine.", "", "- took nothing"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("the note laid out as %q, want %q", got, want)
+	}
+}
+
+func TestAnEventTallerThanAPageContinuesWithItsTimeRepeated(t *testing.T) {
+	t.Parallel()
+	// An event that fits on a page is never split. One that cannot fit on any
+	// page used to be moved to a fresh one and then run off its foot, so the end
+	// of the note never reached the paper. It now continues onto the next page,
+	// which opens with the event's own time: a recorded field rather than words
+	// of the program's own, so the reader can see what the rows belong to.
+	words := strings.Fields(strings.Repeat("Felt unusually tired again after lunch today. ", 300))
+	lines := append([]domain.Line{{Kind: domain.LineHeading, Text: "Tired - 1 recorded event"}},
+		anEvent(strings.Join(words, " "))...)
+	pages := Pages(lines, evenWidths{})
+	if len(pages) < 2 {
+		t.Fatalf("the event came to %d page(s), want it to continue", len(pages))
+	}
+
+	var kept []string
+	for number, rows := range pages {
+		for _, row := range rows {
+			if bottom := row.Top + row.Style.height(); bottom > PageHeight-marginBottom {
+				t.Errorf("page %d has a row reaching %.1fmm, past the %.1fmm the record ends at",
+					number+1, bottom, PageHeight-marginBottom)
+			}
+			if row.Kind == domain.LineNote {
+				kept = append(kept, strings.Fields(row.Text)...)
+			}
+		}
+		if number > 0 && (rows[0].Kind != domain.LineWhen || rows[0].Text != "22 Sep 17:12") {
+			t.Errorf("page %d opens with %q %q, want the event's time", number+1, rows[0].Kind, rows[0].Text)
+		}
+	}
+	if strings.Join(kept, " ") != strings.Join(words, " ") {
+		t.Errorf("the note kept %d of its %d words", len(kept), len(words))
 	}
 }
 

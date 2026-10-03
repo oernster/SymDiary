@@ -44,6 +44,52 @@ describe('the shell', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows an imported event in the record already on screen', async () => {
+    // Save PDF writes the record the store holds when it is pressed. An import
+    // made from the band while the record was showing once left the screen on
+    // the old record, so the reader saved events they had never seen.
+    let imported = false
+    const before = [{ kind: 'title', text: 'SYMPTOM RECORD' }]
+    const after = [...before, { kind: 'heading', text: 'Headache - 1 recorded event' }]
+    const bridge = installBridge({
+      Receipt: vi.fn(() => Promise.resolve(imported ? after : before)),
+      Import: vi.fn(() => {
+        imported = true
+        return Promise.resolve({ chosen: true, added: 1, skipped: 0 })
+      }),
+    })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: /Receipt/ }))
+    await waitFor(() => expect(screen.getByLabelText(/^To/)).toHaveValue('2026-09-22'))
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+
+    fireEvent.click(screen.getByRole('button', { name: /Import/ }))
+
+    expect(await screen.findByText('Headache - 1 recorded event')).toBeInTheDocument()
+    expect(bridge.Receipt).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows an imported event in the history already on screen', async () => {
+    let imported = false
+    const event = { id: 9, definition: 2, symptom: 'Headache', occurredAt: '2026-09-20T08:00',
+      when: '20 Sep 2026 08:00', severity: '', note: '' }
+    installBridge({
+      History: vi.fn(() => Promise.resolve(imported ? [event] : [])),
+      Import: vi.fn(() => {
+        imported = true
+        return Promise.resolve({ chosen: true, added: 1, skipped: 0 })
+      }),
+    })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: /History/ }))
+    expect(await screen.findByText('0 events')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Import/ }))
+
+    expect(await screen.findByText('1 event')).toBeInTheDocument()
+  })
+
   it('says nothing when a file dialog is cancelled', async () => {
     installBridge({
       Export: vi.fn(() => Promise.resolve('')),

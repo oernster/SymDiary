@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/oernster/symdiary/internal/domain"
+	"github.com/oernster/symdiary/internal/infrastructure/pdf"
 )
 
 // aTiredEvent puts one event in the record so there is something to write.
@@ -152,6 +153,28 @@ func TestSavePDFRefusesAnEmptyRangeBeforeAskingWhereToSave(t *testing.T) {
 	// reader's answer, so the refusal comes first.
 	if _, statErr := os.Stat(unreachable); statErr == nil {
 		t.Error("a file was written for a range holding no events")
+	}
+}
+
+func TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave(t *testing.T) {
+	t.Parallel()
+	app, _, chooser := facade(t)
+	record(t, app, RecordFormDTO{Symptom: "Tired", Note: "头痛"})
+	unreachable := filepath.Join(t.TempDir(), "should-not-exist.pdf")
+	chooser.save = unreachable
+
+	_, err := app.SavePDF("2026-08-23", "2026-09-22", "")
+
+	if !errors.Is(err, pdf.ErrUnprintable) {
+		t.Errorf("SavePDF over a note the typeface cannot print = %v, want ErrUnprintable", err)
+	}
+	// As with an empty range, the reader is not asked where to save a document
+	// that will then be refused.
+	if chooser.asked.extension != "" {
+		t.Error("the save dialog was opened for a record that cannot be printed")
+	}
+	if _, statErr := os.Stat(unreachable); statErr == nil {
+		t.Error("a file was written for a record that cannot be printed")
 	}
 }
 

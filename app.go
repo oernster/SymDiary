@@ -83,6 +83,9 @@ type browserOpener interface {
 // different answers. The record is the product, so it is drawn once, here
 // (FR-040, Amendment 16).
 type recordSheet interface {
+	// Check refuses a record the document cannot print faithfully, so the reader
+	// is told before being asked where to save it.
+	Check(lines []domain.Line) error
 	Write(path string, lines []domain.Line) (int, error)
 }
 

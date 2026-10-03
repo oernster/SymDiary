@@ -98,6 +98,10 @@ func TestReadRefusals(t *testing.T) {
 		"other format":  {`{"format":"other","version":1}`, ErrNotAnExport},
 		"newer":         {`{"format":"symdiary-record","version":2}`, ErrNewerFormat},
 		"blank symptom": {`{` + valid + `,"events":[{"symptom":" "}]}`, domain.ErrBlankSymptom},
+		// A definition is refused on the same rule as an event: a symptom kept with no events would
+		// otherwise arrive as a blank entry in the symptoms list.
+		"blank definition": {`{` + valid + `,"definitions":[{"label":"   ","lastUsed":"2026-09-22T17:12:00Z"}]}`,
+			domain.ErrBlankSymptom},
 		"bad severity": {`{` + valid + `,"events":[{"symptom":"Tired","occurredAt":"2026-09-22T17:12:00+01:00",` +
 			`"recordedAt":"2026-09-22T17:12:00+01:00","severity":"awful"}]}`, domain.ErrUnknownSeverity},
 	}

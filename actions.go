@@ -204,12 +204,16 @@ func (a *App) SavePDF(from, to, appointment string) (path string, err error) {
 	if err != nil {
 		return "", err
 	}
+	lines := receipt.Lines(printFraming)
+	if err := a.sheet.Check(lines); err != nil {
+		return "", err
+	}
 	today := domain.DateOf(a.clock.Now(), a.zone)
 	path, err = a.chooser.SavePath(fmt.Sprintf(pdfNameLayout, product.Name, today), documentKind)
 	if err != nil || path == "" {
 		return "", err
 	}
-	if _, err := a.sheet.Write(path, receipt.Lines(printFraming)); err != nil {
+	if _, err := a.sheet.Write(path, lines); err != nil {
 		return "", err
 	}
 	return path, nil

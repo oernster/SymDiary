@@ -83,6 +83,10 @@ export function App() {
   const [message, setMessage] = useState<Message | null>(null)
   const [about, setAbout] = useState<About | null>(null)
   const [guide, setGuide] = useState(false)
+  // How many times the record has changed from the band, beneath whichever pane
+  // is showing. The band's Import stays usable on every pane, so a pane holding
+  // what it read earlier has to be told to read again.
+  const [revision, setRevision] = useState(0)
 
   const refused = useCallback((text: string) => setMessage({ tone: 'error', text }), [])
   const tell = useCallback((text: string) => setMessage({ tone: 'info', text }), [])
@@ -110,6 +114,7 @@ export function App() {
   const importRecord = async () => {
     const result = await api.importRecord(refused)
     if (!result?.chosen) return
+    setRevision((count) => count + 1)
     const skipped =
       result.skipped > 0 ? ` Skipped ${counted(result.skipped, 'event')} already in your record.` : ''
     tell(`Imported ${counted(result.added, 'event')}.${skipped}`)
@@ -160,8 +165,10 @@ export function App() {
 
       <main>
         {pane === 'record' && <RecordPane severities={severities} refused={refused} tell={tell} />}
-        {pane === 'history' && <HistoryPane severities={severities} refused={refused} tell={tell} />}
-        {pane === 'receipt' && <ReceiptPane refused={refused} saved={tell} />}
+        {pane === 'history' && (
+          <HistoryPane severities={severities} refused={refused} tell={tell} revision={revision} />
+        )}
+        {pane === 'receipt' && <ReceiptPane refused={refused} saved={tell} revision={revision} />}
         {pane === 'symptoms' && <SymptomsPane refused={refused} tell={tell} />}
       </main>
 

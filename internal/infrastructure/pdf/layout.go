@@ -103,9 +103,9 @@ type block struct {
 // Pages lays the record out, answering the rows of each page in order.
 //
 // A block that does not fit in what is left of a page starts the next one. A
-// block taller than a whole page is drawn anyway rather than dropped: losing a
-// line of somebody's medical record to make the layout tidy is the one outcome
-// worth avoiding above all others.
+// block taller than a whole page cannot be kept whole on any page, so it
+// continues onto the next (see flow): losing a line of somebody's medical record
+// to make the layout tidy is the one outcome worth avoiding above all others.
 func Pages(lines []domain.Line, measure Measurer) [][]Row {
 	textWidth := PageWidth - 2*marginSide
 	limit := PageHeight - marginBottom
@@ -126,6 +126,10 @@ func Pages(lines []domain.Line, measure Measurer) [][]Row {
 		if len(current) == 0 {
 			item = withoutSpaceAbove(item)
 		}
+		if top+item.height > limit {
+			pages, current, top = flow(item, pages, current, top, limit)
+			continue
+		}
 		for _, row := range item.rows {
 			row.Top += top
 			current = append(current, row)
@@ -136,6 +140,36 @@ func Pages(lines []domain.Line, measure Measurer) [][]Row {
 		pages = append(pages, current)
 	}
 	return pages
+}
+
+// flow places a block taller than a page, starting at top on the current page
+// and continuing onto as many more as it needs. It answers the pages, the page
+// now open and the height reached on it.
+//
+// Each continuation page opens with the block's first row again where that row
+// is an event's time. The time is a recorded field, so the sheet still carries
+// no words of the program's own, while a reader meeting a page of note can see
+// which observation it belongs to.
+func flow(item block, pages [][]Row, current []Row, top, limit float64) ([][]Row, []Row, float64) {
+	origin := top
+	for i, row := range item.rows {
+		placed := origin + row.Top
+		if i > 0 && placed+row.Style.height() > limit {
+			pages = append(pages, current)
+			current = nil
+			top = marginTop
+			if lead := item.rows[0]; lead.Kind == domain.LineWhen {
+				lead.Top = top
+				current = append(current, lead)
+				top += lead.Style.height()
+			}
+			origin = top - row.Top
+			placed = top
+		}
+		row.Top = placed
+		current = append(current, row)
+	}
+	return pages, current, origin + item.height
 }
 
 // withoutSpaceAbove drops the gap a block would have left above itself. At the
@@ -209,26 +243,63 @@ func rowsFor(line domain.Line, textWidth float64, measure Measurer) []Row {
 	return out
 }
 
-// wrap breaks a line into pieces that fit the width, on spaces.
-//
-// A single word wider than the page is left whole rather than cut: it is
-// something the user typed; a record that alters what was written is worse
-// than one that runs into the margin.
+// wrap breaks a line into pieces that fit the width: at each line break the
+// user typed, then on spaces within each paragraph. A paragraph left empty by
+// two breaks in a row stays as an empty row, as it does in the window; breaks
+// trailing the text add nothing.
 func wrap(text string, drawn style, width float64, measure Measurer) []string {
-	words := strings.Fields(text)
-	if len(words) == 0 {
-		return []string{""}
+	paragraphs := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+	for len(paragraphs) > 1 && strings.TrimSpace(paragraphs[len(paragraphs)-1]) == "" {
+		paragraphs = paragraphs[:len(paragraphs)-1]
 	}
 	var out []string
-	line := words[0]
-	for _, word := range words[1:] {
-		candidate := line + " " + word
-		if measure.WidthOf(candidate, drawn.size, drawn.bold) > width {
-			out = append(out, line)
+	for _, paragraph := range paragraphs {
+		out = append(out, wrapParagraph(paragraph, drawn, width, measure)...)
+	}
+	return out
+}
+
+// wrapParagraph breaks one paragraph into pieces that fit the width, on spaces.
+//
+// A single word wider than the line is broken at the line rather than left
+// whole. Left whole, it was measured running off the paper rather than into the
+// margin, so the end of what the user typed was not on the sheet at all.
+func wrapParagraph(text string, drawn style, width float64, measure Measurer) []string {
+	fits := func(piece string) bool { return measure.WidthOf(piece, drawn.size, drawn.bold) <= width }
+	var out []string
+	line := ""
+	for _, word := range strings.Fields(text) {
+		switch {
+		case line != "" && fits(line+" "+word):
+			line += " " + word
+		case fits(word):
+			if line != "" {
+				out = append(out, line)
+			}
 			line = word
-			continue
+		default:
+			if line != "" {
+				out = append(out, line)
+			}
+			pieces := breakWord(word, fits)
+			out = append(out, pieces[:len(pieces)-1]...)
+			line = pieces[len(pieces)-1]
 		}
-		line = candidate
 	}
 	return append(out, line)
+}
+
+// breakWord cuts a word too wide for the line into pieces that each fit, never
+// fewer than one character to a piece so the cutting always ends.
+func breakWord(word string, fits func(string) bool) []string {
+	var out []string
+	piece := ""
+	for _, character := range word {
+		if piece != "" && !fits(piece+string(character)) {
+			out = append(out, piece)
+			piece = ""
+		}
+		piece += string(character)
+	}
+	return append(out, piece)
 }

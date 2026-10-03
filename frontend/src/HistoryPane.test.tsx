@@ -14,7 +14,7 @@ function shown(extra: Parameters<typeof installBridge>[0] = {}) {
     Symptoms: vi.fn(() => Promise.resolve([tired])),
     ...extra,
   })
-  render(<HistoryPane severities={severities} refused={refused} tell={tell} />)
+  render(<HistoryPane severities={severities} refused={refused} tell={tell} revision={0} />)
   return { bridge, refused, tell }
 }
 

@@ -395,12 +395,45 @@ the same record came off the paper three different ways.
 ### An event is never split; every page is numbered
 
 The layout keeps each event whole on one sheet and every page says which page
-it is of how many.
+it is of how many. The one exception is an event too tall for any page: its note
+continues onto the next page, which opens with the event's time again.
 
-- **Rather than:** filling each page to the foot.
-- **Gains:** a dropped sheaf can be put back in order; no observation is read
-  half on one page and half on the next.
-- **Costs:** a page may end with space left over.
+- **Rather than:** filling each page to the foot; for a note longer than a page,
+  moving it to a fresh page and letting it run off the foot, which is what the
+  layout once did, so the end of the note never reached the paper.
+- **Gains:** a dropped sheaf can be put back in order; no observation that fits
+  on a page is read half on one page and half on the next; nothing the person
+  wrote is lost to make the layout tidy. The repeated time is a recorded field,
+  so the sheet still carries no words of SymDiary's own.
+- **Costs:** a page may end with space left over; a very long note does span
+  pages.
+
+### A word wider than the line is broken at the line
+
+A run of characters with no space in it (a long address, say) is cut where the
+line ends and carried on beneath.
+
+- **Rather than:** leaving it whole, which was the first choice, on the reasoning
+  that running into the margin keeps the record intact. Measured, a long address
+  did not run into the margin: it ran off the paper, so its end was not on the
+  sheet.
+- **Gains:** every character typed reaches the paper.
+- **Costs:** a long word reads broken across two lines.
+
+### Characters the typeface cannot print are refused
+
+The typeface carried in the program covers Latin, Greek and Cyrillic. A record
+holding a character outside it is refused when Save PDF is pressed (before the
+person is asked where to save); the refusal names the characters.
+
+- **Rather than:** printing the font's empty box in place of each, which is what
+  happened before: the window showed the note whole while the sheet showed boxes;
+  carrying a typeface for every script, which costs tens of megabytes in every
+  download; borrowing a font from the operating system, a failure path that
+  differs on every desktop.
+- **Gains:** the sheet never silently loses the person's words.
+- **Costs:** a person writing in a script outside the typeface cannot save a PDF
+  of those entries. Should anyone need it, a fallback typeface is the next step.
 
 ## Export and import
 
@@ -446,6 +479,19 @@ included.
 - **Gains:** importing the same file twice changes nothing.
 - **Costs:** an event edited on one machine arrives as a second event on the
   other.
+
+### Import keeps the times a file states, future ones included
+
+The recording form refuses a time in the future (FR-006). An import does not:
+an event whose time lies ahead of this machine's clock is read as the file
+states it. A blank symptom, on an event or on a symptom kept with none, is still
+refused.
+
+- **Rather than:** refusing a future time on import too.
+- **Gains:** an export taken on a machine whose clock runs a few minutes fast
+  reads back whole rather than refused.
+- **Costs:** a hand-edited file can place an event in the future. Raised by the
+  2026-10-03 audit and kept on the owner's ruling, so it is not reopened.
 
 ## The interface
 

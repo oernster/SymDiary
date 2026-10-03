@@ -74,10 +74,15 @@ these:
 - Keeps each symptom you name, exactly as you typed it, then offers it next time.
 - Shows the history newest first, filtered by dates, symptom or severity.
 - Corrects and deletes entries, asking first and naming what will go.
-- Saves a symptom record for a date range as a PDF, numbered page by page, with
-  no event ever split across two sheets. The document names the program that
-  produced it and says, above the first entry, that it is not a diagnosis: it is
-  your own notes, printed for a healthcare professional to read.
+- Saves a symptom record for a date range as a PDF, numbered page by page. An
+  event that fits on a page is never split across two sheets; a note too long
+  for any page continues onto the next, with its time repeated at the top. Your
+  line breaks are kept. The document names the program that produced it and
+  says, above the first entry, that it is not a diagnosis: it is your own notes,
+  printed for a healthcare professional to read.
+- Sets the PDF in a typeface covering Latin, Greek and Cyrillic. A record holding
+  characters outside it (Chinese, Arabic or an emoji, say) is refused, naming
+  them, rather than printed as empty boxes.
 - Starts the record from your last appointment once you mark its date, with
   custom dates a click away. When the range covers that date, the sheet names it
   under the dates; untick a box to leave it off. The date stays in the window
