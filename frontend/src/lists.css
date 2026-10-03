@@ -15,6 +15,11 @@
   margin: 12px 0;
 }
 
+/* A choice's words stay on one line beside its box, however tight the row. */
+.receipt-controls .choice {
+  white-space: nowrap;
+}
+
 .events,
 .symptom-list {
   list-style: none;
