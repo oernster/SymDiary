@@ -61,6 +61,7 @@ export interface ReceiptLine {
   kind:
     | 'title'
     | 'range'
+    | 'appointment'
     | 'heading'
     | 'when'
     | 'severity'
@@ -103,11 +104,11 @@ interface Bridge {
   DeletionPrompt(ids: number[]): Promise<string>
   Delete(ids: number[]): Promise<void>
   Rename(id: number, label: string): Promise<void>
-  Receipt(from: string, to: string): Promise<ReceiptLine[] | null>
+  Receipt(from: string, to: string, appointment: string): Promise<ReceiptLine[] | null>
   Export(): Promise<string>
   Import(): Promise<ImportResult>
   Donate(): Promise<void>
-  SavePDF(from: string, to: string): Promise<string>
+  SavePDF(from: string, to: string, appointment: string): Promise<string>
 }
 
 interface WailsWindow {
@@ -165,8 +166,11 @@ export const api = {
   remove: (ids: number[], refused: Refused) => act((b) => b.Delete(ids), refused),
   rename: (id: number, label: string, refused: Refused) =>
     act((b) => b.Rename(id, label), refused),
-  receipt: (from: string, to: string, refused: Refused) =>
-    ask(async (b) => (await b.Receipt(from, to)) ?? [], refused),
+  // appointment is the last appointment for the sheet to name; '' names none
+  // (FR-046). The page decides whether to send it; Go refuses one the range
+  // does not cover.
+  receipt: (from: string, to: string, appointment: string, refused: Refused) =>
+    ask(async (b) => (await b.Receipt(from, to, appointment)) ?? [], refused),
   exportRecord: (refused: Refused) => ask((b) => b.Export(), refused),
   importRecord: (refused: Refused) => ask((b) => b.Import(), refused),
   // The page asks for the donation page; it never names an address. The one
@@ -176,6 +180,6 @@ export const api = {
   // The record is drawn by Go, not printed by the browser. Three engines print
   // a page three different ways; one of them draws a PDF the same way every
   // time; that is the document a reader hands to a doctor.
-  savePDF: (from: string, to: string, refused: Refused) =>
-    ask((b) => b.SavePDF(from, to), refused),
+  savePDF: (from: string, to: string, appointment: string, refused: Refused) =>
+    ask((b) => b.SavePDF(from, to, appointment), refused),
 }

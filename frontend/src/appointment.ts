@@ -37,6 +37,23 @@ export function heldAppointment(raw: string | null, today: string): string {
   return raw
 }
 
+/**
+ * The appointment the sheet names; '' for none. The sheet names it only when
+ * the reader leaves it on and the range covers it, ends included: outside the
+ * range the line would be noise or would read as a mistake. Go refuses one
+ * outside the range as well, so a page that got this wrong could not print it.
+ */
+export function sheetAppointment(
+  appointment: string, from: string, to: string, onSheet: boolean,
+): string {
+  return onSheet && covers(appointment, from, to) ? appointment : ''
+}
+
+/** Whether the range from to to, both included, covers the appointment. */
+export function covers(appointment: string, from: string, to: string): boolean {
+  return appointment !== '' && from <= appointment && appointment <= to
+}
+
 /** The range "Since last appointment" means: that day to today, both included. */
 export function sinceAppointment(appointment: string, today: string): [string, string] {
   return [appointment, today]

@@ -342,6 +342,10 @@ that does not resolve is a requirement nobody can check.
   the framing of FR-045; every page carries `Page N of M`; no page begins with
   what was observed at an event whose time was on the page before; cancelling
   the dialog writes nothing and says nothing.
+- Once the record is showing, changing the range shall show the record for the
+  new range without being asked again (Amendment 19). Save PDF writes the
+  range in the fields, so the record on screen must always be that one; an
+  answer for a range since left is discarded.
 - Each save dialog shall filter to the kind of file it is about to write and
   shall suggest a name carrying that extension. macOS applies a dialog's filter
   to the name it is given, so a document offered under another kind's filter is
@@ -351,12 +355,17 @@ that does not resolve is a requirement nobody can check.
   `internal/infrastructure/pdf/sheet_test.go`, plus opening a saved document on
   the reference machine (A-4). The dialog's own kind is held by
   `pdf_test.go::TestTheSaveDialogAsksForTheKindOfFileItIsActuallyWriting`,
-  proved to bite by planting the defect it was written for.
+  proved to bite by planting the defect it was written for. The record following
+  the range is held by `frontend/src/ReceiptPane.test.tsx`, "follows a change of
+  dates once the record is showing" and "never lets a slow answer for an earlier
+  range overwrite the current one", the second proved to bite by planting the
+  discard out.
 
 **FR-041 Receipt contents**
 - Priority: Must
 - Requirement: The receipt shall hold, in order: the title `SYMPTOM RECORD`;
-  the date range; then, for each symptom recorded in the range, a heading of
+  the date range; the last appointment where FR-046 names one; then, for each
+  symptom recorded in the range, a heading of
   the symptom and its number of events, followed by each event's local date
   and time, severity where given and note where given. The fixed framing of
   FR-045 opens this order and sits within it, which it does not otherwise
@@ -375,14 +384,18 @@ that does not resolve is a requirement nobody can check.
 **FR-042 Arithmetic only**
 - Priority: Must
 - Requirement: The receipt shall contain only what the user recorded, counts of
-  events and the fixed framing of FR-045; it shall contain no interpretation,
-  trend, comparison or suggestion.
+  events, the last appointment the user marked where FR-046 names it and the
+  fixed framing of FR-045; it shall contain no interpretation, trend,
+  comparison or suggestion.
 - The framing is fixed text that names no event and changes with no event, so
   it states nothing about what was recorded. Anything that varies with the
-  record belongs to FR-041 and is held by this requirement.
+  record belongs to FR-041 and is held by this requirement. The appointment is
+  a date the user typed, printed as typed; it is set beside the range, never
+  among the events, so the sheet compares nothing with it.
 - Verified by: `receipt_test.go::TestReceiptHoldsNoOtherText`, which asserts
-  every line of a generated receipt is a title, a range, a heading, a count, a
-  field of a recorded event or one of the two framing lines.
+  every line of a generated receipt is a title, a range, the appointment the
+  user marked, a heading, a count, a field of a recorded event or one of the
+  two framing lines.
 
 **FR-043 Empty range**
 - Priority: Must
@@ -440,7 +453,7 @@ that does not resolve is a requirement nobody can check.
 - Verified by: `internal/domain/receipt_test.go::TestTheFramingOpensTheRecord`,
   `TestTheFramingIsTheSameWhateverTheRecord`
 
-**FR-046 Since last appointment** (Amendment 18)
+**FR-046 Since last appointment** (Amendments 18 and 19)
 - Priority: Should
 - Requirement: The receipt pane shall let the user mark one date, today or
   earlier, as their last appointment. While one is held, the pane shall offer
@@ -448,9 +461,22 @@ that does not resolve is a requirement nobody can check.
   included) and `Custom dates`; it shall open on the first. While none is held,
   it shall offer custom dates alone, opening on the last thirty days as before.
   Changing either date by hand makes the range custom.
-- The receipt and the saved document shall be exactly those for the same two
-  dates chosen by hand: the choice fills the range and nothing else. The sheet
-  never mentions an appointment, so FR-041, FR-042 and FR-045 are untouched.
+- The choice of range fills the two dates and nothing else: the receipt is
+  the one the same dates give when chosen by hand.
+- Where the range covers the last appointment (its first and last days
+  included), the receipt shall carry the line `Last appointment: DD Mon YYYY`
+  directly under the date range, above the statement of FR-045 (Amendment 19).
+  The rule is the range, not how it was chosen: a custom range spanning the
+  appointment names it too. A range that does not cover it names nothing. The
+  receipt service refuses an appointment outside the range rather than
+  printing it.
+- Beside the date the pane shall offer `Show on the sheet`, ticked when the
+  pane opens and enabled only while the range covers the appointment; unticked,
+  the sheet names no appointment.
+- The line names the most recent appointment only, since only one is held;
+  `Last` says so rather than implying it is the only one. It is never placed
+  among the events: arranging the record around the appointment would be the
+  software presenting the data, which section 4.1 keeps out.
 - An appointment is a date boundary, not an event and not part of the record.
   It lives in the window's own storage beside the theme (FR-073), so it is
   neither exported nor imported. Storage that refuses to be read holds no
@@ -459,12 +485,17 @@ that does not resolve is a requirement nobody can check.
 - Nothing prompts the user to mark one (section 1.3: no prompts).
 - Acceptance: Given a last appointment of 2 Sep 2026 on 22 Sep 2026, the pane
   opens on `Since last appointment` with the range 2 Sep to 22 Sep and asks for
-  the receipt of exactly those dates. Given none, it opens on 23 Aug to 22 Sep
-  and offers no choice of range.
+  the receipt of exactly those dates, its fourth line reading `Last
+  appointment: 02 Sep 2026`. The same holds for 1 Aug to 22 Sep and for 23 Aug
+  to 2 Sep; 10 Sep to 22 Sep and 1 Aug to 31 Aug name no appointment. Given
+  none, it opens on 23 Aug to 22 Sep and offers no choice of range.
 - Verified by: `frontend/src/appointment.test.ts`;
-  `frontend/src/ReceiptPane.test.tsx`, "since the last appointment". Proved
-  to bite by planting a future appointment let through and a range starting
-  the day after.
+  `frontend/src/ReceiptPane.test.tsx`, "since the last appointment";
+  `internal/domain/receipt_test.go::TestTheLastAppointmentIsNamedOnlyWithinTheRange`,
+  `TestTheLastAppointmentSitsUnderTheRange`, `TestNoAppointmentAddsNoLine`;
+  `receipt_test.go::TestTheSheetNamesTheLastAppointmentTheWindowSends`. Proved
+  to bite by planting a future appointment let through, a range starting the
+  day after and a receipt service accepting an appointment outside its range.
 
 ### 3.5 Functional requirements: export
 
@@ -959,6 +990,7 @@ named beside it.
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 19 | 2026-10-03 | FR-040, FR-041, FR-042, FR-046 | The sheet names the last appointment, `Last appointment: 02 Sep 2026`, under the date range whenever the range covers it; a `Show on the sheet` box, ticked by default, lets the reader leave it off. Once the record is showing, changing the range refreshes it. | Owner's request, superseding Amendment 18's ruling that the sheet never mentions the appointment. The reader of the sheet benefits from knowing where the last consultation falls: what has already been heard and what is new is the first thing a doctor asks of the record; the comparison is the doctor's to make. The rule is the range rather than how it was chosen, so a custom range spanning the appointment names it too, while a range that does not cover it names nothing, where the line would be noise. The line sits beside the range and never among the events, so the software arranges nothing around it (4.1). The opt-out is for a reader who would rather the date not reach paper. The refresh answers a defect the owner found: the record on screen stayed on the old range while Save PDF wrote the new one, so the two could differ. |
 | 18 | 2026-10-03 | New FR-046, FR-068 | The receipt pane holds the date of the last appointment and offers `Since last appointment` beside `Custom dates`. The Guide says so. | Owner's request. The product exists for the walk from recording to the appointment; the date of the last one is the boundary a person reaches for. Typing it again each time is friction with nothing to show for it. Owner's rulings the same day: the date lives in the window's storage rather than the record, so the record stays observations alone and the export format stays at version 1; the appointment's own day is included, since an event seen twice costs the reader nothing while an afternoon event left off costs something; one date, today or earlier, so it stays a boundary rather than becoming a calendar. The sheet is unchanged: the MHRA caveat in 4.1 concerns features that enhance the data presented; the data presented is identical. |
 | 17 | 2026-10-02 | Section 2.3 | Windows 10 joins Windows 11 as a supported system, 64-bit on both. Where the WebView2 runtime is missing or older than 94.0.992.31, the application and the setup program each offer to download and install it through Microsoft's bootstrapper before their window opens; declining leaves them unopened. | Owner's decision: the download page says Windows 10 or 11. Windows 10 does not always carry WebView2, which Windows 11 does. The behaviour above is Wails' default `download` strategy, read from the v2.12.0 source (`internal/wv2installer`); `build.ps1` chooses no other. It has not yet been run on a Windows 10 machine. |
 | 16 | 2026-09-23 | FR-040, FR-045 | The record is no longer printed through the window's browser. The application draws it as a PDF and the reader chooses where it goes; the button reads Save PDF. | Owner's decision after the browser path was measured on all three desktops and gave three different answers. A page belongs to whichever engine the desktop ships, so what came off the paper depended on that engine, on whether the reader had "Headers and footers" ticked in their print dialog and on which of the CSS the sheet leaned on that engine had implemented. Windows was made correct and measured; Linux and macOS were, in the owner's words, a mess. The record is the product, so it is drawn once, in Go, where the same bytes reach every reader. What that buys beyond consistency: pagination that never splits an event across two sheets, a page number on every page, a document the suite can measure rather than one only a printer can. The typeface is the Go fonts, carried inside the binary, because a PDF's built-in fonts can say nothing outside Latin-1 and a note holding a curly quote or an accented name would have reached a doctor with the user's own words mangled. |

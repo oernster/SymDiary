@@ -22,7 +22,7 @@ func TestSavePDFWritesTheRecordWhereTheReaderChose(t *testing.T) {
 	aTiredEvent(t, app)
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 
-	path, err := app.SavePDF("2026-08-23", "2026-09-22")
+	path, err := app.SavePDF("2026-08-23", "2026-09-22", "")
 	if err != nil {
 		t.Fatalf("SavePDF: %v", err)
 	}
@@ -41,6 +41,24 @@ func TestSavePDFWritesTheRecordWhereTheReaderChose(t *testing.T) {
 	}
 }
 
+func TestSavePDFSaysSoWhenTheDocumentCannotBeWritten(t *testing.T) {
+	t.Parallel()
+	// A folder that is really a file: the reader chose somewhere nothing can be
+	// written, so the save must be refused rather than reported as done.
+	app, _, chooser := facade(t)
+	aTiredEvent(t, app)
+	blocker := filepath.Join(t.TempDir(), "not-a-folder")
+	if err := os.WriteFile(blocker, nil, 0o600); err != nil {
+		t.Fatalf("making the blocking file: %v", err)
+	}
+	chooser.save = filepath.Join(blocker, "record.pdf")
+
+	path, err := app.SavePDF("2026-08-23", "2026-09-22", "")
+	if err == nil || path != "" {
+		t.Errorf("SavePDF into a file = %q, %v; want no path and the reason", path, err)
+	}
+}
+
 func TestTheSaveDialogAsksForTheKindOfFileItIsActuallyWriting(t *testing.T) {
 	t.Parallel()
 	// macOS applies the dialog's filter to the name it is given. A document
@@ -51,7 +69,7 @@ func TestTheSaveDialogAsksForTheKindOfFileItIsActuallyWriting(t *testing.T) {
 	aTiredEvent(t, app)
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 
-	if _, err := app.SavePDF("2026-08-23", "2026-09-22"); err != nil {
+	if _, err := app.SavePDF("2026-08-23", "2026-09-22", ""); err != nil {
 		t.Fatalf("SavePDF: %v", err)
 	}
 	if chooser.asked.extension != "pdf" {
@@ -108,7 +126,7 @@ func TestSavePDFWritesNothingWhenTheReaderCancels(t *testing.T) {
 	aTiredEvent(t, app)
 	chooser.save = ""
 
-	path, err := app.SavePDF("2026-08-23", "2026-09-22")
+	path, err := app.SavePDF("2026-08-23", "2026-09-22", "")
 
 	if err != nil {
 		t.Errorf("a cancelled dialog answered %v, want no error: cancelling is not a fault", err)
@@ -125,7 +143,7 @@ func TestSavePDFRefusesAnEmptyRangeBeforeAskingWhereToSave(t *testing.T) {
 	unreachable := filepath.Join(t.TempDir(), "should-not-exist.pdf")
 	chooser.save = unreachable
 
-	_, err := app.SavePDF("2026-01-01", "2026-01-31")
+	_, err := app.SavePDF("2026-01-01", "2026-01-31", "")
 
 	if !errors.Is(err, domain.ErrEmptyRange) {
 		t.Errorf("SavePDF over an empty range = %v, want ErrEmptyRange", err)
@@ -142,10 +160,10 @@ func TestSavePDFRefusesADateItCannotRead(t *testing.T) {
 	app, _, _ := facade(t)
 	aTiredEvent(t, app)
 
-	if _, err := app.SavePDF("not-a-date", "2026-09-22"); err == nil {
+	if _, err := app.SavePDF("not-a-date", "2026-09-22", ""); err == nil {
 		t.Error("SavePDF with an unreadable start date answered no error")
 	}
-	if _, err := app.SavePDF("2026-08-23", "not-a-date"); err == nil {
+	if _, err := app.SavePDF("2026-08-23", "not-a-date", ""); err == nil {
 		t.Error("SavePDF with an unreadable end date answered no error")
 	}
 }
@@ -160,7 +178,7 @@ func TestSavePDFWithNoWriterIsAnInternalFault(t *testing.T) {
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 	app.sheet = nil
 
-	if _, err := app.SavePDF("2026-08-23", "2026-09-22"); err == nil {
+	if _, err := app.SavePDF("2026-08-23", "2026-09-22", ""); err == nil {
 		t.Error("SavePDF with no sheet answered no error, want the internal fault")
 	}
 }

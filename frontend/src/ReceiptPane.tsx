@@ -10,7 +10,8 @@
 import { useEffect, useState } from 'react'
 import { api, type ReceiptLine, type Refused } from './api'
 import {
-  appointmentKey, heldAppointment, rangeLabels, sinceAppointment, type RangeChoice,
+  appointmentKey, covers, heldAppointment, rangeLabels, sheetAppointment, sinceAppointment,
+  type RangeChoice,
 } from './appointment'
 import crest from './assets/icons/application-icon.png'
 import { keepStored, readStored } from './storage'
@@ -94,14 +95,38 @@ export function ReceiptPane({ refused, saved }: Props) {
     set(value)
   }
 
-  const show = async () => {
-    setLines([])
-    const found = await api.receipt(from, to, refused)
-    if (found) setLines(found)
-  }
+  /**
+   * How many times the reader has asked to see the record; 0 until the first.
+   * Once it is showing, it follows the range: the dates in the fields are the
+   * ones Save PDF writes, so the record on screen must be the same one.
+   */
+  const [asked, setAsked] = useState(0)
+
+  /**
+   * Whether the reader wants the last appointment on the sheet. On unless they
+   * say otherwise; it only has a say while the range covers the appointment.
+   */
+  const [onSheet, setOnSheet] = useState(true)
+  const covered = covers(appointment, from, to)
+  const named = sheetAppointment(appointment, from, to, onSheet)
+
+  useEffect(() => {
+    if (asked === 0) return
+    // An answer for a range the fields have since left is thrown away, so a
+    // slow reply can never overwrite the record for the dates now showing.
+    let current = true
+    void api.receipt(from, to, named, refused).then((found) => {
+      if (current) setLines(found ?? [])
+    })
+    return () => {
+      current = false
+    }
+  }, [asked, from, to, named, refused])
+
+  const show = () => setAsked((count) => count + 1)
 
   const savePDF = async () => {
-    const path = await api.savePDF(from, to, refused)
+    const path = await api.savePDF(from, to, named, refused)
     // An empty path is a cancelled dialog, which is not worth announcing.
     if (path) saved(`Your symptom record was saved to ${path}.`)
   }
@@ -114,6 +139,13 @@ export function ReceiptPane({ refused, saved }: Props) {
           Last appointment <input type="date" value={appointment} max={today}
             onChange={(e) => markAppointment(e.target.value)} />
         </label>
+        {appointment && (
+          <label className="choice">
+            <input type="checkbox" checked={onSheet} disabled={!covered}
+              onChange={(e) => setOnSheet(e.target.checked)} />
+            Show on the sheet
+          </label>
+        )}
         {appointment && (
           <fieldset className="field choices">
             <legend>Range</legend>

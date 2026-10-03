@@ -126,18 +126,28 @@ var printFraming = domain.Framing{
 	Statement:  product.PrintStatement,
 }
 
-// Receipt answers the receipt's lines for a range (FR-040, FR-041).
-func (a *App) Receipt(from, to string) (lines []ReceiptLineDTO, err error) {
+// receiptFor reads the three dates the page sends and answers the receipt they
+// describe. The window and the document both come through here, so the record
+// on screen and the one saved cannot be asked for in two different ways. An
+// empty appointment names none (FR-046).
+func (a *App) receiptFor(from, to, appointment string) (domain.Receipt, error) {
+	texts := [...]string{from, to, appointment}
+	var dates [len(texts)]domain.Date
+	for at, text := range texts {
+		date, err := optionalDate(text)
+		if err != nil {
+			return domain.Receipt{}, err
+		}
+		dates[at] = date
+	}
+	return a.services.History.Receipt(dates[0], dates[1], dates[2])
+}
+
+// Receipt answers the receipt's lines for a range (FR-040, FR-041), naming the
+// last appointment when the page sends one (FR-046).
+func (a *App) Receipt(from, to, appointment string) (lines []ReceiptLineDTO, err error) {
 	defer guard(&err)
-	start, err := optionalDate(from)
-	if err != nil {
-		return nil, err
-	}
-	end, err := optionalDate(to)
-	if err != nil {
-		return nil, err
-	}
-	receipt, err := a.services.History.Receipt(start, end)
+	receipt, err := a.receiptFor(from, to, appointment)
 	if err != nil {
 		return nil, err
 	}
@@ -188,17 +198,9 @@ const pdfNameLayout = "%s symptom record %s.pdf"
 // source: both ask the history for the receipt and both draw the framing of
 // FR-045 around it. What the page cannot do is decide where a page ends, which
 // is why the document is drawn rather than printed.
-func (a *App) SavePDF(from, to string) (path string, err error) {
+func (a *App) SavePDF(from, to, appointment string) (path string, err error) {
 	defer guard(&err)
-	start, err := optionalDate(from)
-	if err != nil {
-		return "", err
-	}
-	end, err := optionalDate(to)
-	if err != nil {
-		return "", err
-	}
-	receipt, err := a.services.History.Receipt(start, end)
+	receipt, err := a.receiptFor(from, to, appointment)
 	if err != nil {
 		return "", err
 	}

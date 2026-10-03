@@ -32,7 +32,7 @@ func TestTheSheetSaysItIsNotADiagnosis(t *testing.T) {
 	app, _, _ := facade(t)
 	record(t, app, RecordFormDTO{Symptom: "Tired"})
 
-	lines, err := app.Receipt("2026-08-23", "2026-09-22")
+	lines, err := app.Receipt("2026-08-23", "2026-09-22", "")
 	if err != nil {
 		t.Fatalf("Receipt: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestTheReceiptTheWindowSends(t *testing.T) {
 	record(t, app, RecordFormDTO{Symptom: "Tired", Note: "Only been awake for about 10 minutes."})
 	clock.now = clock.now.Add(time.Hour)
 
-	lines, err := app.Receipt("2026-08-23", "2026-09-22")
+	lines, err := app.Receipt("2026-08-23", "2026-09-22", "")
 	if err != nil {
 		t.Fatalf("Receipt: %v", err)
 	}
@@ -75,7 +75,30 @@ func TestTheReceiptTheWindowSends(t *testing.T) {
 			t.Errorf("line %d = %+v, want %+v", i, lines[i], want[i])
 		}
 	}
-	if _, err := app.Receipt("2026-01-01", "2026-01-31"); !errors.Is(err, domain.ErrEmptyRange) {
+	if _, err := app.Receipt("2026-01-01", "2026-01-31", ""); !errors.Is(err, domain.ErrEmptyRange) {
 		t.Errorf("an empty range = %v", err)
+	}
+}
+
+func TestTheSheetNamesTheLastAppointmentTheWindowSends(t *testing.T) {
+	t.Parallel()
+	// FR-046: the page decides whether to send the appointment; the sheet then
+	// carries it under the range, worded as the owner approved it.
+	app, _, _ := facade(t)
+	record(t, app, RecordFormDTO{Symptom: "Tired"})
+
+	lines, err := app.Receipt("2026-08-23", "2026-09-22", "2026-09-02")
+	if err != nil {
+		t.Fatalf("Receipt: %v", err)
+	}
+	if len(lines) < 4 || lines[3] != (ReceiptLineDTO{Kind: "appointment", Text: "Last appointment: 02 Sep 2026"}) {
+		t.Errorf("receipt = %+v, want the appointment as its fourth line", lines)
+	}
+	_, err = app.Receipt("2026-09-10", "2026-09-22", "2026-09-02")
+	if !errors.Is(err, domain.ErrAppointmentOutsideRange) {
+		t.Errorf("an appointment outside the range = %v, want it refused", err)
+	}
+	if _, err := app.Receipt("2026-08-23", "2026-09-22", "soon"); err == nil {
+		t.Error("an appointment that is not a date answered no error")
 	}
 }

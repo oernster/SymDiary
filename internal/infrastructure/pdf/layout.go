@@ -64,11 +64,13 @@ var styles = map[domain.LineKind]style{
 	domain.LineProvenance: {size: 9, grey: true},
 	domain.LineTitle:      {size: 14, bold: true, spaceAbove: 5},
 	domain.LineRange:      {size: 10.5},
-	domain.LineStatement:  {size: 9, grey: true, spaceAbove: 2},
-	domain.LineHeading:    {size: 11.5, bold: true, spaceAbove: 7},
-	domain.LineWhen:       {size: 10.5, spaceAbove: 3},
-	domain.LineSeverity:   {size: 10.5, indent: 6},
-	domain.LineNote:       {size: 10.5, indent: 6},
+	// The appointment reads as part of the range it sits in, not as a heading.
+	domain.LineAppointment: {size: 10.5},
+	domain.LineStatement:   {size: 9, grey: true, spaceAbove: 2},
+	domain.LineHeading:     {size: 11.5, bold: true, spaceAbove: 7},
+	domain.LineWhen:        {size: 10.5, spaceAbove: 3},
+	domain.LineSeverity:    {size: 10.5, indent: 6},
+	domain.LineNote:        {size: 10.5, indent: 6},
 }
 
 // Measurer answers how wide a string would be, in millimetres, at a size and

@@ -42,7 +42,7 @@ describe('the bridge', () => {
 
   it('reads a receipt of nothing as an empty list', async () => {
     installBridge({ Receipt: vi.fn(() => Promise.resolve(null)) })
-    expect(await api.receipt('2026-09-01', '2026-09-30', vi.fn())).toEqual([])
+    expect(await api.receipt('2026-09-01', '2026-09-30', '', vi.fn())).toEqual([])
   })
 
   it('leaves an empty reason alone', () => {

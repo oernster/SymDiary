@@ -13,7 +13,7 @@ describe('the receipt', () => {
     expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23')
 
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
-    await waitFor(() => expect(bridge.Receipt).toHaveBeenCalledWith('2026-08-23', '2026-09-22'))
+    await waitFor(() => expect(bridge.Receipt).toHaveBeenCalledWith('2026-08-23', '2026-09-22', ''))
   })
 
   it('shows every line the backend gave it; nothing else', async () => {
@@ -80,7 +80,7 @@ describe('the receipt', () => {
     // different ways; the record is what the product is for.
     fireEvent.click(screen.getByRole('button', { name: 'Save PDF' }))
     await waitFor(() =>
-      expect(bridge.SavePDF).toHaveBeenCalledWith('2026-08-23', '2026-09-22'))
+      expect(bridge.SavePDF).toHaveBeenCalledWith('2026-08-23', '2026-09-22', ''))
     await waitFor(() =>
       expect(saved).toHaveBeenCalledWith(
         'Your symptom record was saved to C:/Users/x/Downloads/record.pdf.'))
@@ -112,6 +112,65 @@ describe('the receipt', () => {
 
     await waitFor(() => expect(refused).toHaveBeenCalledWith('No events were recorded in that range'))
     expect(screen.queryByLabelText('The symptom record')).toBeNull()
+  })
+
+  it('follows a change of dates once the record is showing', async () => {
+    // Without this the record on screen and the one Save PDF writes can be two
+    // different ranges: the save asks for the dates in the fields.
+    const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
+
+    // Nothing is asked for until the reader asks to see the record.
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-08-01' } })
+    expect(bridge.Receipt).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-09-01' } })
+    await waitFor(() => expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-09-01', '2026-09-22', ''))
+    fireEvent.change(screen.getByLabelText(/To/), { target: { value: '2026-09-15' } })
+    await waitFor(() => expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-09-01', '2026-09-15', ''))
+  })
+
+  it('clears the record when the new range holds nothing, then follows again', async () => {
+    const refused = vi.fn()
+    const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
+    render(<ReceiptPane refused={refused} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+
+    bridge.Receipt.mockImplementationOnce(() =>
+      Promise.reject(new Error('no events were recorded in that range')))
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-09-21' } })
+    await waitFor(() => expect(screen.queryByLabelText('The symptom record')).toBeNull())
+    // A record that is not showing cannot be saved as though it were.
+    expect(screen.getByRole('button', { name: 'Save PDF' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-08-23' } })
+    await screen.findByLabelText('The symptom record')
+  })
+
+  it('never lets a slow answer for an earlier range overwrite the current one', async () => {
+    const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22'))
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+
+    let answerSlowly: (lines: typeof aReceipt) => void = () => {}
+    bridge.Receipt.mockImplementationOnce(
+      () => new Promise((resolve) => { answerSlowly = resolve }))
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-09-01' } })
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-09-02' } })
+    await waitFor(() => expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-09-02', '2026-09-22', ''))
+
+    const stale = [{ kind: 'title', text: 'A record for dates no longer chosen' }]
+    answerSlowly(stale as typeof aReceipt)
+    await new Promise((settle) => setTimeout(settle, 0))
+    expect(screen.queryByText('A record for dates no longer chosen')).toBeNull()
   })
 
   it('counts back across a month and a year', () => {
@@ -150,7 +209,10 @@ describe('since the last appointment', () => {
     expect(screen.getByLabelText(/To/)).toHaveValue('2026-09-22')
 
     fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
-    await waitFor(() => expect(bridge.Receipt).toHaveBeenCalledWith('2026-09-02', '2026-09-22'))
+    // The appointment is the range's first day, so the range covers it and the
+    // sheet names it (FR-046).
+    await waitFor(() =>
+      expect(bridge.Receipt).toHaveBeenCalledWith('2026-09-02', '2026-09-22', '2026-09-02'))
   })
 
   it('remembers an appointment marked here and starts the range on it', async () => {
@@ -197,6 +259,53 @@ describe('since the last appointment', () => {
     render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
     await waitFor(() => expect(screen.getByLabelText(/From/)).toHaveValue('2026-08-23'))
     expect(screen.queryAllByRole('radio')).toHaveLength(0)
+  })
+
+  it('names the appointment on the sheet unless the reader says not to', async () => {
+    window.localStorage.setItem(appointmentKey, '2026-09-02')
+    const bridge = installBridge({
+      Receipt: vi.fn(() => Promise.resolve(aReceipt)),
+      SavePDF: vi.fn(() => Promise.resolve('C:/Users/x/Downloads/record.pdf')),
+    })
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(since()).toBeChecked())
+    const onSheet = screen.getByRole('checkbox', { name: 'Show on the sheet' })
+    expect(onSheet).toBeChecked()
+    expect(onSheet).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+
+    // Unticked, the record on screen follows at once and the save asks for the
+    // same sheet: no appointment.
+    fireEvent.click(onSheet)
+    await waitFor(() =>
+      expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-09-02', '2026-09-22', ''))
+    fireEvent.click(screen.getByRole('button', { name: 'Save PDF' }))
+    await waitFor(() =>
+      expect(bridge.SavePDF).toHaveBeenCalledWith('2026-09-02', '2026-09-22', ''))
+  })
+
+  it('names the appointment inside a wider range; never outside one', async () => {
+    window.localStorage.setItem(appointmentKey, '2026-09-02')
+    const bridge = installBridge({ Receipt: vi.fn(() => Promise.resolve(aReceipt)) })
+    render(<ReceiptPane refused={vi.fn()} saved={vi.fn()} />)
+    await waitFor(() => expect(since()).toBeChecked())
+    fireEvent.click(screen.getByRole('button', { name: 'Show the record' }))
+    await screen.findByLabelText('The symptom record')
+    const onSheet = screen.getByRole('checkbox', { name: 'Show on the sheet' })
+
+    // A range spanning the appointment still names it.
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-08-01' } })
+    await waitFor(() =>
+      expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-08-01', '2026-09-22', '2026-09-02'))
+    expect(onSheet).toBeEnabled()
+
+    // A range starting after it cannot, so the choice has no say.
+    fireEvent.change(screen.getByLabelText(/From/), { target: { value: '2026-09-10' } })
+    await waitFor(() =>
+      expect(bridge.Receipt).toHaveBeenLastCalledWith('2026-09-10', '2026-09-22', ''))
+    expect(onSheet).toBeDisabled()
   })
 
   it('still opens when storage refuses to be read', async () => {

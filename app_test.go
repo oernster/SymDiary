@@ -225,11 +225,11 @@ func TestEditAndFilterRefusals(t *testing.T) {
 			return err
 		},
 		"bad receipt from": func() error {
-			_, err := app.Receipt("first", "2026-09-22")
+			_, err := app.Receipt("first", "2026-09-22", "")
 			return err
 		},
 		"bad receipt to": func() error {
-			_, err := app.Receipt("2026-09-01", "last")
+			_, err := app.Receipt("2026-09-01", "last", "")
 			return err
 		},
 		"delete nothing": func() error { return app.Delete(nil) },
@@ -324,7 +324,7 @@ func TestEveryActionSaysWhyWhenTheRecordCannotBeRead(t *testing.T) {
 		"delete": func() error { return app.Delete([]int64{1}) },
 		"rename": func() error { return app.Rename(1, "Tired") },
 		"receipt": func() error {
-			_, err := app.Receipt("2026-09-01", "2026-09-30")
+			_, err := app.Receipt("2026-09-01", "2026-09-30", "")
 			return err
 		},
 		"export": func() error { _, err := app.Export(); return err },

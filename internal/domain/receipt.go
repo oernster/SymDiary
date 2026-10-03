@@ -13,6 +13,11 @@ var ErrEmptyRange = errors.New("no events were recorded in that range")
 // ErrOpenRange refuses a receipt whose range lacks a start or an end.
 var ErrOpenRange = errors.New("a receipt needs a start date and an end date")
 
+// ErrAppointmentOutsideRange refuses a last appointment the receipt's range does
+// not cover. The sheet names one only where it falls within the range (FR-046);
+// anywhere else the line would be noise or would read as a mistake.
+var ErrAppointmentOutsideRange = errors.New("the last appointment is outside the range")
+
 // ReceiptGroup is one symptom's events within the receipt range, oldest first.
 type ReceiptGroup struct {
 	Definition DefinitionID
@@ -21,12 +26,28 @@ type ReceiptGroup struct {
 }
 
 // Receipt is the printable symptom record for a date range (section 3.4). It
-// holds the user's events and their counts; nothing else (FR-042).
+// holds the user's events and their counts, plus the last appointment the user
+// marked where the range covers it; nothing else (FR-042, FR-046).
 type Receipt struct {
-	From   Date
-	To     Date
-	Groups []ReceiptGroup
-	zone   *time.Location
+	From Date
+	To   Date
+	// Appointment is the user's last appointment; zero when the sheet names none.
+	Appointment Date
+	Groups      []ReceiptGroup
+	zone        *time.Location
+}
+
+// WithAppointment answers the receipt naming the user's last appointment
+// (FR-046); a zero date names none. An appointment outside the range is
+// refused rather than dropped, so a caller that asked for the line is told why
+// the sheet will not carry it.
+func (r Receipt) WithAppointment(appointment Date) (Receipt, error) {
+	if !appointment.IsZero() &&
+		(appointment.Compare(r.From) < 0 || appointment.Compare(r.To) > 0) {
+		return Receipt{}, ErrAppointmentOutsideRange
+	}
+	r.Appointment = appointment
+	return r, nil
 }
 
 // BuildReceipt gathers the events of a range into symptom groups. Groups run in
@@ -72,17 +93,19 @@ func BuildReceipt(events []Event, from, to Date, zone *time.Location) (Receipt, 
 type LineKind string
 
 // The kinds of receipt line. There are no others: a receipt holds a title, its
-// range, a heading with a count per symptom, the recorded fields of events and
-// the two framing lines of FR-045.
+// range, the last appointment where the range covers it, a heading with a count
+// per symptom, the recorded fields of events and the two framing lines of
+// FR-045.
 const (
-	LineTitle      LineKind = "title"
-	LineRange      LineKind = "range"
-	LineHeading    LineKind = "heading"
-	LineWhen       LineKind = "when"
-	LineSeverity   LineKind = "severity"
-	LineNote       LineKind = "note"
-	LineProvenance LineKind = "provenance"
-	LineStatement  LineKind = "statement"
+	LineTitle       LineKind = "title"
+	LineRange       LineKind = "range"
+	LineAppointment LineKind = "appointment"
+	LineHeading     LineKind = "heading"
+	LineWhen        LineKind = "when"
+	LineSeverity    LineKind = "severity"
+	LineNote        LineKind = "note"
+	LineProvenance  LineKind = "provenance"
+	LineStatement   LineKind = "statement"
 )
 
 // Framing is the fixed text printed around the record: what produced the sheet
@@ -119,6 +142,10 @@ const (
 	fullDateLayout   = "2 January 2006"
 	whenLayout       = "02 Jan 15:04"
 	whenYearedLayout = "02 Jan 2006 15:04"
+	appointmentLabel = "Last appointment: "
+	// appointmentLayout always names the year: the line is a date on its own,
+	// with no range beside it to supply one.
+	appointmentLayout = "02 Jan 2006"
 )
 
 // Lines writes the receipt as the lines it is printed in (FR-041), wrapped in
@@ -132,8 +159,14 @@ func (r Receipt) Lines(framing Framing) []Line {
 		{Kind: LineProvenance, Text: framing.Provenance},
 		{Kind: LineTitle, Text: receiptTitle},
 		{Kind: LineRange, Text: r.rangeText()},
-		{Kind: LineStatement, Text: framing.Statement},
 	}
+	if !r.Appointment.IsZero() {
+		lines = append(lines, Line{
+			Kind: LineAppointment,
+			Text: appointmentLabel + r.Appointment.start(time.UTC).Format(appointmentLayout),
+		})
+	}
+	lines = append(lines, Line{Kind: LineStatement, Text: framing.Statement})
 	layout := whenLayout
 	if r.From.Year != r.To.Year {
 		layout = whenYearedLayout

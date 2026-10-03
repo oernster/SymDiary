@@ -74,11 +74,16 @@ func (h History) Rename(id domain.DefinitionID, label string) error {
 	return nil
 }
 
-// Receipt answers the receipt for a range (FR-040 to FR-044).
-func (h History) Receipt(from, to domain.Date) (domain.Receipt, error) {
+// Receipt answers the receipt for a range (FR-040 to FR-044), naming the last
+// appointment when one is given; a zero appointment names none (FR-046).
+func (h History) Receipt(from, to, appointment domain.Date) (domain.Receipt, error) {
 	events, err := h.store.Events()
 	if err != nil {
 		return domain.Receipt{}, because(ErrNotRead, err)
 	}
-	return domain.BuildReceipt(events, from, to, h.zone)
+	receipt, err := domain.BuildReceipt(events, from, to, h.zone)
+	if err != nil {
+		return domain.Receipt{}, err
+	}
+	return receipt.WithAppointment(appointment)
 }

@@ -52,7 +52,7 @@ func TestListRefusals(t *testing.T) {
 	wantIs(t, "failed suggest", err, ErrNotRead)
 	_, err = history.Symptoms()
 	wantIs(t, "failed symptoms", err, ErrNotRead)
-	_, err = history.Receipt(domain.Date{}, domain.Date{})
+	_, err = history.Receipt(domain.Date{}, domain.Date{}, domain.Date{})
 	wantIs(t, "failed receipt", err, ErrNotRead)
 	wantIs(t, "failed rename read", history.Rename(1, "Exhausted"), ErrNotRenamed)
 }
@@ -103,11 +103,26 @@ func TestReceiptFromTheStore(t *testing.T) {
 	t.Parallel()
 	_, history := filled(t)
 	day := domain.Date{Year: 2026, Month: time.September, Day: 22}
-	receipt, err := history.Receipt(day, day)
+	receipt, err := history.Receipt(day, day, domain.Date{})
 	if err != nil {
 		t.Fatalf("Receipt: %v", err)
 	}
 	if len(receipt.Groups) != 2 || receipt.Groups[0].Symptom != "Tired" {
 		t.Errorf("groups = %+v, want Tired first (it occurred first)", receipt.Groups)
 	}
+}
+
+func TestReceiptNamesTheAppointmentItCovers(t *testing.T) {
+	t.Parallel()
+	_, history := filled(t)
+	day := domain.Date{Year: 2026, Month: time.September, Day: 22}
+	receipt, err := history.Receipt(day, day, day)
+	if err != nil || receipt.Appointment != day {
+		t.Errorf("Receipt naming its own day = %+v, %v", receipt.Appointment, err)
+	}
+	earlier := domain.Date{Year: 2026, Month: time.September, Day: 2}
+	_, err = history.Receipt(day, day, earlier)
+	wantIs(t, "appointment outside the range", err, domain.ErrAppointmentOutsideRange)
+	_, err = history.Receipt(domain.Date{}, day, domain.Date{})
+	wantIs(t, "open range", err, domain.ErrOpenRange)
 }

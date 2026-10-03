@@ -110,10 +110,16 @@ func TestReceiptHoldsNoOtherText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildReceipt: %v", err)
 	}
+	// Named, so the one line that varies with something other than an event is
+	// held to exactly what the user marked.
+	receipt, err = receipt.WithAppointment(Date{2026, time.September, 2})
+	if err != nil {
+		t.Fatalf("WithAppointment: %v", err)
+	}
 	allowed := map[LineKind]bool{
 		LineTitle: true, LineRange: true, LineHeading: true,
 		LineWhen: true, LineSeverity: true, LineNote: true,
-		LineProvenance: true, LineStatement: true,
+		LineProvenance: true, LineStatement: true, LineAppointment: true,
 	}
 	notes := map[string]bool{"Only been awake for about 10 minutes.": true}
 	for _, line := range receipt.Lines(testFraming) {
@@ -129,6 +135,84 @@ func TestReceiptHoldsNoOtherText(t *testing.T) {
 		if line.Kind == LineStatement && line.Text != testFraming.Statement {
 			t.Errorf("statement line %q is not the framing it was handed", line.Text)
 		}
+		if line.Kind == LineAppointment && line.Text != "Last appointment: 02 Sep 2026" {
+			t.Errorf("appointment line %q is not the date the user marked", line.Text)
+		}
+	}
+}
+
+func TestTheLastAppointmentSitsUnderTheRange(t *testing.T) {
+	t.Parallel()
+	// The acceptance example of FR-046: the line follows the range and comes
+	// before the statement, which it pushes down by one and otherwise leaves be.
+	receipt, err := BuildReceipt(sample(t),
+		Date{2026, time.August, 23}, Date{2026, time.September, 22}, london(t))
+	if err != nil {
+		t.Fatalf("BuildReceipt: %v", err)
+	}
+	receipt, err = receipt.WithAppointment(Date{2026, time.September, 2})
+	if err != nil {
+		t.Fatalf("WithAppointment: %v", err)
+	}
+	lines := receipt.Lines(testFraming)
+	assertLines(t, lines[:5], []string{
+		testFraming.Provenance,
+		"SYMPTOM RECORD",
+		"23 August - 22 September 2026",
+		"Last appointment: 02 Sep 2026",
+		testFraming.Statement,
+	})
+	if lines[3].Kind != LineAppointment {
+		t.Errorf("the appointment line has kind %q, want %q", lines[3].Kind, LineAppointment)
+	}
+}
+
+func TestTheLastAppointmentIsNamedOnlyWithinTheRange(t *testing.T) {
+	t.Parallel()
+	appointment := Date{2026, time.September, 2}
+	cases := []struct {
+		name     string
+		from, to Date
+		named    bool
+	}{
+		{"the range starts on it", appointment, Date{2026, time.September, 22}, true},
+		{"the range starts on it and ends earlier", appointment, Date{2026, time.September, 15}, true},
+		{"the range spans it", Date{2026, time.August, 1}, Date{2026, time.September, 22}, true},
+		{"the range ends on it", Date{2026, time.August, 23}, appointment, true},
+		{"the range starts after it", Date{2026, time.September, 10}, Date{2026, time.September, 22}, false},
+		{"the range ends before it", Date{2026, time.August, 1}, Date{2026, time.August, 31}, false},
+	}
+	for _, c := range cases {
+		receipt, err := BuildReceipt(sample(t), c.from, c.to, london(t))
+		if err != nil {
+			t.Fatalf("%s: BuildReceipt: %v", c.name, err)
+		}
+		named, err := receipt.WithAppointment(appointment)
+		if c.named && err != nil {
+			t.Errorf("%s: WithAppointment = %v, want it named", c.name, err)
+		}
+		if !c.named && !errors.Is(err, ErrAppointmentOutsideRange) {
+			t.Errorf("%s: WithAppointment = %v, want ErrAppointmentOutsideRange", c.name, err)
+		}
+		if !c.named && !named.Appointment.IsZero() {
+			t.Errorf("%s: a refused appointment was kept", c.name)
+		}
+	}
+}
+
+func TestNoAppointmentAddsNoLine(t *testing.T) {
+	t.Parallel()
+	receipt, err := BuildReceipt(sample(t),
+		Date{2026, time.August, 23}, Date{2026, time.September, 22}, london(t))
+	if err != nil {
+		t.Fatalf("BuildReceipt: %v", err)
+	}
+	unnamed, err := receipt.WithAppointment(Date{})
+	if err != nil {
+		t.Fatalf("WithAppointment with none: %v", err)
+	}
+	if !slices.Equal(lineTexts(unnamed.Lines(testFraming)), lineTexts(receipt.Lines(testFraming))) {
+		t.Error("a receipt naming no appointment differs from one never asked to")
 	}
 }
 
