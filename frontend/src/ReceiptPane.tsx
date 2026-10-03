@@ -147,7 +147,7 @@ export function ReceiptPane({ refused, saved }: Props) {
           </label>
         )}
         {appointment && (
-          <fieldset className="field choices">
+          <fieldset className="field radio-row">
             <legend>Range</legend>
             {(['since', 'custom'] as const).map((kind) => (
               <label key={kind} className="choice">

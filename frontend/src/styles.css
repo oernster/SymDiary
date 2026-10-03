@@ -234,13 +234,13 @@ h1 {
 }
 
 /* A row of radio choices under one legend: severity, the receipt's range. */
-.choices {
+.radio-row {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 16px;
 }
 
-.choices legend {
+.radio-row legend {
   margin-bottom: 4px;
 }
 

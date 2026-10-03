@@ -15,9 +15,37 @@
   margin: 12px 0;
 }
 
-/* A choice's words stay on one line beside its box, however tight the row. */
-.receipt-controls .choice {
+/*
+  Every caption in the receipt's rows reads beside its control, on one line, as
+  From and To do; a row too narrow for all of them wraps whole groups instead of
+  breaking a caption from its control. The range choice's legend joins its
+  radios on the same line rather than standing above them, so every group in
+  the row is one line high and they centre on one another.
+*/
+.receipt-controls {
+  flex-wrap: wrap;
+}
+
+.receipt-controls label {
   white-space: nowrap;
+}
+
+.receipt-controls .radio-row {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+/*
+  The engine gives a radio 3px of margin above and none below, which drops it
+  1.5px under the line its neighbours centre on (measured in Chromium).
+*/
+.receipt-controls .choice input {
+  margin-block: 0;
+}
+
+.receipt-controls .radio-row legend {
+  float: left;
+  margin: 0;
 }
 
 .events,
