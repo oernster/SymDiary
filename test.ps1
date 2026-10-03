@@ -156,7 +156,7 @@ foreach ($package in $measured.Keys) {
     Write-Host ("  {0,-42} {1,5}%  floor {2}%" -f $package, $reached, $floor)
 }
 
-# Not gated at all, deliberately: internal/product holds two constants,
+# Not gated at all, deliberately: internal/product holds nine constants,
 # tests/structural is itself the guard and setup/setuptest is the double the
 # other two suites are written against. A floor over any of them asserts
 # nothing.
@@ -177,8 +177,9 @@ if ($LASTEXITCODE -ne 0) { throw "the front-end suite failed with exit code $LAS
 # The setup program's page has no build step, so nothing compiles it and a
 # typo there reaches a user as a window that draws no screen at all. This is
 # the cheapest check that exists: node parses each file without running it.
-# It is not a lint and it is not a type check; TECH_DEBT.md carries what is
-# still missing.
+# It is not a lint and it is not a type check; tests/structural/setuppage_test.go
+# checks the ids and state fields the scripts read against the markup and the
+# setup facade.
 Write-Host 'Parsing the setup page...'
 foreach ($script in Get-ChildItem -Path 'installer/frontend/dist' -Filter '*.js') {
     node --check $script.FullName
