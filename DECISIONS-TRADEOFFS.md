@@ -48,17 +48,21 @@ health.
 - **Costs:** every new feature, word on the site or line on the sheet has to be
   read against that reading first.
 
-### Go and Wails, with nothing that needs a C compiler
+### Go and Wails, with the record and the document in Go alone
 
 The application is Go behind a Wails window over a React page. The record and
-the document both go through libraries written in Go alone.
+the document both go through libraries written in Go alone; on Windows nothing
+in the build needs a C compiler.
 
 - **Rather than:** a C database driver; a toolkit drawn natively on each
   desktop.
-- **Gains:** one toolchain builds everything; the delivery recipe, the gate and
-  the setup program were ported from earlier projects on the same stack.
+- **Gains:** one toolchain builds the Windows release; the delivery recipe, the
+  gate and the setup program were ported from earlier projects on the same
+  stack.
 - **Costs:** the page is rendered by a different browser engine on each
-  desktop, which is what later moved the document out of it.
+  desktop, which is what later moved the document out of it. On Linux and macOS
+  Wails' own window code needs a C compiler, so those packages are built on
+  their own machines.
 
 ### Specification before code
 
@@ -73,17 +77,20 @@ with a numbered amendment giving the reason.
 
 ## Privacy and the network
 
-### No network connection at all
+### No network connection of its own
 
-SymDiary opens no connection, for any purpose. The rule is enforced by tests
-over the code and by the page's own security policy, not left as a promise.
-That includes the one feature most desktop applications reach for: nothing
-asks whether a newer release exists.
+SymDiary's own code opens no connection, for any purpose. The rule is enforced
+by tests over the code and by the page's own security policy, not left as a
+promise. That includes the one feature most desktop applications reach for:
+nothing asks whether a newer release exists. The single fetch that can happen
+belongs to the window toolkit, on a Windows machine missing the component the
+window is drawn with (see the Windows 10 entry below).
 
 - **Rather than:** a promise that the network is used sparingly; a daily update
   check.
 - **Gains:** no account, telemetry, advertising or analytics is possible
-  without a test failing first; the rule has no exception.
+  without a test failing first; nothing from the record ever leaves the
+  machine.
 - **Costs:** every feature that would need the network is ruled out; a person
   finds a new release by visiting the site.
 
@@ -558,6 +565,20 @@ notarised disk image, each the way that platform installs things.
 - **Gains:** each platform installs SymDiary the way its users expect.
 - **Costs:** three delivery routes to maintain.
 
+### Windows 10 as well as Windows 11
+
+SymDiary supports 64-bit Windows 10 and 11. Windows 11 always carries the
+WebView2 component the window is drawn with; Windows 10 may not. Where it is
+missing or too old, the application and the setup program ask before opening;
+if the person agrees, they fetch and run Microsoft's installer for it. Declining
+leaves them unopened.
+
+- **Rather than:** Windows 11 alone.
+- **Gains:** machines still on Windows 10 can run SymDiary.
+- **Costs:** the one network fetch anything makes on SymDiary's behalf, on
+  those machines alone and only after asking; the route has not yet been run
+  on a Windows 10 machine.
+
 ### Installed for one user, without administrator rights
 
 The setup program installs into the user's own programs folder and registers
@@ -745,15 +766,16 @@ detail in the log.
   never kills the window.
 - **Costs:** a handler on every call.
 
-### Only the run log knows which platform it is on
+### Platform code kept to two small corners
 
-Everything else is portable. The log alone carries Windows-only work, while its
-rule for where the log lives is written for all three platforms at once.
+Everything else in the application is portable. Only the run log and the
+handing of the keyboard to the page carry Windows-only work; the log's rule for
+where it lives is written for all three platforms at once.
 
 - **Rather than:** platform checks spread through the code.
-- **Gains:** all three platforms' answers are exercised wherever the suite
-  runs.
-- **Costs:** the log is split in two.
+- **Gains:** all three platforms' answers for the log are exercised wherever
+  the suite runs; elsewhere the keyboard handover simply does nothing.
+- **Costs:** each of the two is split in two.
 
 ### Tests with real parts; guards proved to bite
 

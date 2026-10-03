@@ -9,7 +9,7 @@ Every command here is PowerShell, run from the repository root.
 | Go 1.26+ | The application | https://go.dev/dl/ |
 | Node 20+ with npm | The page | https://nodejs.org/ |
 | Wails v2 CLI | Building the window | `go install github.com/wailsapp/wails/v2/cmd/wails@latest` |
-| WebView2 runtime | Running the window | Ships with Windows 11; on Windows 10 the application offers to install it when it is missing |
+| WebView2 runtime | Running the window | Ships with Windows 11; where it is missing or too old, as it can be on Windows 10, the application and the setup program offer to download Microsoft's installer for it |
 | Python 3 with Pillow | Regenerating the icons; stamping the site (Python alone) | `python -m pip install pillow` |
 
 Versions measured on the reference machine on 2026-09-22: Go 1.26.3, Wails
@@ -173,7 +173,7 @@ which its own uninstall removes again.
   behaviour amends the specification first.
 - The domain performs no IO and never reads the clock.
 - Only `main.go` wires infrastructure to the application.
-- No file over 400 lines; none left between 381 and 399.
+- No file over 400 lines; none left between 381 and 400.
 - Every colour goes in `frontend/src/theme.css` and nowhere else.
 - A shape crossing the window boundary is written twice, in `dto.go` and in
   `frontend/src/api.ts`. The structural test compares them.

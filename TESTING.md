@@ -76,8 +76,12 @@ told.
 
 Not gated at all: `internal/product` holds constants and no behaviour, though the
 two that reach paper are asserted word for word from the facade's own tests;
-`tests/structural` is itself the guard; `internal/infrastructure/setup/setuptest`
-is the double the other two suites are written against.
+`internal/licence` holds the embedded licence and its plain reading, compared
+with the root LICENSE by `tests/structural`; `internal/infrastructure/windowfocus`
+is Win32 work against a window the suite does not own, settled by pressing Tab
+in the built window; `tests/structural` is itself the guard;
+`internal/infrastructure/setup/setuptest` is the double the other two suites are
+written against.
 
 ## What each suite proves
 

@@ -85,8 +85,9 @@ Out of scope (decided by the source document, sections 10 and 15):
 ### 2.1 Product perspective
 
 A new, standalone desktop application for Windows, macOS and Linux
-(Amendment 7). It has no server, no network access and no data other than the
-record and its own settings.
+(Amendment 7). It has no server and no data other than the record and its own
+settings. Its own code has no network access; the one fetch is the window
+toolkit's, on a Windows machine missing WebView2 (Amendment 17, NFR-PRIV-001).
 
 ### 2.2 User classes
 
@@ -123,8 +124,9 @@ rules land under `~/.var/app/uk.codecrafter.SymDiary`.
 
 ### 2.4 Constraints
 
-- C-1 Language: Go 1.26 with no cgo in the build graph; frontend React with
-  TypeScript on Vite.
+- C-1 Language: Go 1.26, with SymDiary's own code and its libraries pure Go and
+  no cgo in the Windows build; on Linux and macOS Wails' own window code is
+  built with cgo. Frontend React with TypeScript on Vite.
 - C-2 Toolkit: Wails v2 (v2.12.0 measured on the reference machine).
 - C-3 Storage: SQLite through `modernc.org/sqlite` (pure Go).
 - C-4 Layering: `internal/{domain,application,infrastructure}` with the UI in
@@ -640,7 +642,7 @@ that does not resolve is a requirement nobody can check.
 - The pane shall read itself down at the house pace and step aside the moment
   the reader touches it (FR-075).
 - A copy of the licence shall also be delivered with the program on every
-  platform: in the install folder on Windows, under `share/licences` inside
+  platform: in the install folder on Windows, under `share/licenses` inside
   the Flatpak, in the bundle's resources on macOS. Section 4 of the licence
   asks that every recipient be given a copy along with the program;
   a screen in a setup program is not a copy the recipient keeps. Verified by
@@ -729,10 +731,14 @@ where documents of one to three pages were written and looked right; the suite
 measures a seven page record's geometry rather than its speed.
 
 **NFR-PRIV-001 No network**: The application and the setup program shall open
-no network connection. Verified by `tests/structural/boundary_test.go::TestNoNetworkImports`
+no network connection of their own. Verified by `tests/structural/boundary_test.go::TestNoNetworkImports`
 (forbids `net` and every `net/` package in the repository's own Go code) plus a
-Content-Security-Policy of `default-src 'self'; connect-src 'none'` on the
-frontend, checked by a test reading `index.html`.
+Content-Security-Policy carrying `default-src 'self'` and `connect-src 'none'`
+on the frontend, checked by a test reading `index.html`. The one exception is
+Wails' own: on Windows, where WebView2 is missing or older than 94.0.992.31, the
+toolkit asks first; if the user agrees, it downloads Microsoft's bootstrapper
+before the window opens (Amendment 17). Nothing from the record is involved; the
+boundary test cannot see that code, since it lives in the Wails module.
 
 **NFR-PRIV-002 No telemetry**: No component shall collect or send usage data.
 Verified by the same boundary test plus a dependency review in `go.mod` and
@@ -753,7 +759,7 @@ prints that it has; a release is never cut with it.
 
 **NFR-MAINT-002 Structure**: A structural test shall enforce the layering
 (C-4), domain purity (no `os`, `time.Now` or `database/sql` in the domain), the
-400-line module cap and its 381 to 399 danger band.
+400-line module cap and its 381 to 400 danger band.
 
 **NFR-MAINT-003 Checks**: `gofmt`, `go vet`, `staticcheck`, `tsc --noEmit`,
 `eslint` and Vitest shall report nothing.

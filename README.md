@@ -52,13 +52,18 @@ these:
   led to another. The record counts your entries; that is the only arithmetic.
 - It does not rewrite what you wrote into medical terminology.
 - It does not remind or nag you to record anything.
-- It opens no network connection at all. There is no account, no cloud service,
-  no advertising and no telemetry. A test forbids the networking packages
-  outright and the page carries a Content-Security-Policy of `connect-src
-  'none'`. The Donate button is not an exception: it hands an address to the
-  desktop and your browser does the asking, so SymDiary still fetches nothing.
-  On Linux the Flatpak is granted no network permission at all, so there the
-  claim is enforced by the sandbox rather than only by a test.
+- It sends nothing anywhere. There is no account, no cloud service, no
+  advertising and no telemetry. SymDiary's own code holds no networking at all:
+  a test forbids the networking packages outright and the page carries a
+  Content-Security-Policy of `connect-src 'none'`. The Donate button is not an
+  exception: it hands an address to the desktop and your browser does the
+  asking. On Linux the Flatpak is granted no network permission at all, so there
+  the claim is enforced by the sandbox rather than only by a test.
+- One connection can happen on Windows, before the window opens. SymDiary draws
+  its window with Microsoft's WebView2, which Windows 11 always carries and
+  Windows 10 may not. Where it is missing or too old, the window toolkit (Wails)
+  asks first; if you agree, it downloads Microsoft's installer and runs it.
+  Nothing from your record is involved. Decline and SymDiary does not open.
 - It does not encrypt your record. The file is protected by your user account,
   as your documents are.
 
@@ -81,7 +86,7 @@ these:
 
 | Piece | What |
 |---|---|
-| Language | Go 1.26, no cgo: nothing in the build graph uses it |
+| Language | Go 1.26; no cgo on Windows. On Linux and macOS Wails' own window code is built with cgo; SymDiary's code and its libraries are pure Go |
 | Window | Wails v2: WebView2 on Windows, WebKit on macOS and Linux |
 | Page | React 18 and TypeScript, built by Vite |
 | Record | SQLite through `modernc.org/sqlite` (pure Go), WAL, synchronous FULL |
@@ -91,7 +96,8 @@ these:
 ## Running it
 
 Download the setup program on Windows, the DMG on macOS or the Flatpak bundle on
-Linux. To build any of them from source, see [DEVELOPMENT.md](DEVELOPMENT.md).
+Linux. Windows needs version 10 or 11, 64-bit; the DMG needs Apple Silicon (M1
+or later). To build any of them from source, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 Your record and the run log go wherever the platform keeps such things:
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Why SymDiary: your notes, on your own computer</title>
-<meta name="description" content="Why a symptom diary helps at an appointment; why SymDiary keeps everything on your own computer with no network connection; what it will not do, on purpose."/>
+<meta name="description" content="Why a symptom diary helps at an appointment; why SymDiary keeps everything on your own computer and sends nothing anywhere; what it will not do, on purpose."/>
 <link rel="icon" href="application-icon.png"/>
 <link rel="stylesheet" href="styles.css?v=a22ba948a0"/>
 </head>
@@ -44,9 +44,11 @@
     <div class="wrap">
         <h2>It stays on your computer</h2>
         <p class="intro">Health notes are about as personal as writing gets, so
-            SymDiary does not send them anywhere. It cannot: the program opens no
-            network connection at all; a test in the source forbids the
-            networking code outright.</p>
+            SymDiary does not send them anywhere. It cannot: SymDiary's own code
+            holds no networking at all; a test in the source forbids it outright.
+            The one exception never touches your notes. On a Windows computer
+            missing Microsoft's WebView2, the part SymDiary draws its window with,
+            it asks before fetching Microsoft's installer for it.</p>
         <ul class="plain-list">
             <li><strong>No account.</strong> Nothing to sign up for, nothing to sign
                 in to, no email address wanted.</li>
