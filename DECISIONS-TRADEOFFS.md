@@ -289,7 +289,8 @@ composes a sentence of its own.
 
 The record holds a title, the date range, each symptom with its number of
 events and each event's time, severity and note, plus two fixed framing lines.
-Nothing else may appear on it.
+The one other line is the date of the last appointment the person marked,
+where the range covers it. Nothing else may appear on it.
 
 - **Rather than:** summaries, comparisons or trends.
 - **Gains:** a doctor reads the person's observations and not the program's
@@ -337,6 +338,35 @@ The record carries no name, date of birth or other identifying detail.
 - **Rather than:** a header naming the person.
 - **Gains:** SymDiary holds no identity to leak; a mislaid sheet names nobody.
 - **Costs:** the person writes their name on it by hand if a clinic wants it.
+
+### The last appointment is a date, not an event
+
+The person can mark one date, today or earlier, as their last appointment. The
+record then opens on the range from that day to today, with custom dates beside
+it. The date is kept by the window, as the theme is, not in the record.
+
+- **Rather than:** an appointment event in the record; a calendar of past and
+  future appointments.
+- **Gains:** the boundary the person reaches for before every appointment is
+  one click; the record and its export stay the person's observations alone,
+  with no change to either format.
+- **Costs:** the date does not travel in an export or to another machine; only
+  the most recent appointment is known.
+
+### The sheet names the last appointment where the range covers it
+
+When the range covers the marked appointment, its date prints under the date
+range, whichever way the range was chosen. A range that does not cover it names
+nothing. The person can untick a box to leave it off. The date sits beside the
+range and never among the events.
+
+- **Rather than:** a sheet that never mentions it; a line on every sheet;
+  dividing the events into before and after.
+- **Gains:** the doctor sees where the last consultation falls and can tell
+  what is new; the comparison stays the doctor's, so the sheet still
+  interprets nothing.
+- **Costs:** one more line a test holds as public wording; a range spanning two
+  appointments names only the later one.
 
 ### An empty range gives no record
 

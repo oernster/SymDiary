@@ -78,6 +78,10 @@ these:
   no event ever split across two sheets. The document names the program that
   produced it and says, above the first entry, that it is not a diagnosis: it is
   your own notes, printed for a healthcare professional to read.
+- Starts the record from your last appointment once you mark its date, with
+  custom dates a click away. When the range covers that date, the sheet names it
+  under the dates; untick a box to leave it off. The date stays in the window
+  rather than in your record or its export.
 - Exports the whole record to a JSON file you own; reads one back too.
 - Opens dark, with a button in the bar that moves it to light and remembers
   which you chose.

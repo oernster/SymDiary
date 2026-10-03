@@ -141,11 +141,11 @@ export const guideSections: GuideSection[] = [
     rules: [
       {
         title: 'It stays on this computer.',
-        text: 'There is no account, no cloud service and no advertising. SymDiary opens no network connection at all; exporting and printing happen only when you ask.',
+        text: "There is no account, no cloud service and no advertising. SymDiary itself opens no network connection; exporting and saving a PDF happen only when you ask. The one exception never touches your record: on a Windows computer missing Microsoft's WebView2, which the window is drawn with, SymDiary asks before fetching Microsoft's installer for it.",
       },
       {
         title: 'It is not encrypted.',
-        text: 'The file is protected by your Windows account, as your documents are. Anyone who can sign in as you can read it.',
+        text: 'The file is protected by the account you sign in to, as your documents are. Anyone who can sign in as you can read it.',
       },
       {
         title: 'Deleting cannot be undone.',

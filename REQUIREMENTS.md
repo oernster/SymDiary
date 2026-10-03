@@ -66,6 +66,7 @@ Out of scope (decided by the source document, sections 10 and 15):
 | Note | Optional free text attached to an event, kept byte for byte as entered. |
 | History | The list of events in the application, newest first. |
 | Receipt | The symptom record for a date range: shown in the window and saved as a PDF (section 3.4). |
+| Last appointment | One date, today or earlier, the user marks as their most recent appointment. A range boundary kept by the window, not part of the record (FR-046). |
 | Export | The machine-readable file holding the whole record (section 3.5). |
 | Record | Everything SymDiary stores: definitions plus events. |
 | Local time | The time in the zone the desktop is set to. |
