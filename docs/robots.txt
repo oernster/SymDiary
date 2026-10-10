@@ -1,0 +1,5 @@
+# robots.txt for SymDiary (https://symdiary.com/)
+User-agent: *
+Allow: /
+
+Sitemap: https://symdiary.com/sitemap.xml
