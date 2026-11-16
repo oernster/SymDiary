@@ -35,6 +35,9 @@ In scope for version 1:
 - A Windows desktop application in Go with Wails, plus the house setup program.
 - The same application on Linux and macOS, packaged as a Flatpak and a signed
   DMG (Amendment 7).
+- A phone recorder for Android: records offline, then hands its events to the
+  desktop as an export file through the phone's share sheet (Amendment 21,
+  section 3.10).
 
 Out of scope (decided by the source document, sections 10 and 15):
 
@@ -48,7 +51,9 @@ Out of scope (decided by the source document, sections 10 and 15):
 - Accounts, sign-in, cloud storage and synchronisation between machines.
 - Advertising, analytics and telemetry.
 - Event types other than symptoms (source section 14; see 3.8).
-- A phone or web version in version 1 (platform decided 2026-09-22).
+- A recorder on iPhone, until a device can measure it (Amendment 21, D-1).
+- Any live link between phone and desktop; the handover is a file (Amendment 21,
+  D-5).
 - A single-file setup program for Linux or macOS. Those two are packaged the way
   each platform expects, a Flatpak and a signed DMG; the bespoke setup program
   stays Windows-only (Amendment 7).
@@ -71,6 +76,11 @@ Out of scope (decided by the source document, sections 10 and 15):
 | Record | Everything SymDiary stores: definitions plus events. |
 | Local time | The time in the zone the desktop is set to. |
 | Reference machine | Oliver's desktop, Windows 11 build 26200. |
+| Recorder | The installable web application on the phone. |
+| Desktop application | SymDiary as it ships on Windows, macOS and Linux. |
+| Send | The recorder writing an export file of events then offering it to the phone's share sheet. |
+| Sent | An event that has been in a send the share sheet completed (FR-090). |
+| Batch | The events one send carried. |
 
 ### 1.5 References
 
@@ -89,6 +99,11 @@ A new, standalone desktop application for Windows, macOS and Linux
 (Amendment 7). It has no server and no data other than the record and its own
 settings. Its own code has no network access; the one fetch is the window
 toolkit's, on a Windows machine missing WebView2 (Amendment 17, NFR-PRIV-001).
+
+The phone recorder (Amendment 21) is a second client of the same domain and
+application, compiled to WebAssembly and served as static files from
+`app.symdiary.com`. It has no server either and opens no connection of its own
+(NFR-PRIV-004); it reaches the desktop only as a file the user moves.
 
 ### 2.2 User classes
 
@@ -123,6 +138,10 @@ Where each platform keeps the two files it owns:
 Inside the Flatpak both variables already point at the sandbox, so the same
 rules land under `~/.var/app/uk.codecrafter.SymDiary`.
 
+The phone recorder runs installed to the home screen in Chrome 157 or later on
+Android (NFR-PORT-001), keeping its events in the browser's storage for
+`app.symdiary.com`. Measured on a Samsung Galaxy Z Flip 5 (Appendix A).
+
 ### 2.4 Constraints
 
 - C-1 Language: Go 1.26, with SymDiary's own code and its libraries pure Go and
@@ -138,6 +157,9 @@ rules land under `~/.var/app/uk.codecrafter.SymDiary`.
 - C-7 `VERSION` at the repository root is the single source of the version.
 - C-8 The README header (the `# SymDiary` title and the owner's opening line)
   stays verbatim; additions go beneath it.
+- C-9 The phone recorder runs `internal/domain` and `internal/application`
+  compiled to WebAssembly; no rule is written a second time for the phone
+  (Amendment 21, D-10).
 
 ### 2.5 Assumptions and dependencies
 
@@ -147,6 +169,7 @@ rules land under `~/.var/app/uk.codecrafter.SymDiary`.
 | A-2 | The desktop's clock is right; SymDiary trusts it for the default occurrence time. | Oliver | Accepted 2026-09-23. The application reads the clock and offers the instant as the default, which the user may replace (FR-003), so a wrong clock is corrected by the person rather than detected by the program. |
 | A-3 | Oliver supplies the application artwork as a master PNG with a transparent background. | Oliver | Satisfied. The masters are in `assets/` plus `donate.png` at the root; `tools/genicons.py` derives every shipped size from them. |
 | A-4 | A PDF the application draws itself opens on a machine that has never met SymDiary; it says the same thing on every desktop. | Claude | Measured and true (Appendix A, M-1) |
+| A-5 | An installed recorder's events survive weeks of the recorder going unopened on Android. | Oliver | Accepted 2026-11-16, untested beyond a single evening. Chrome granted persistent storage (M-3), which is the measured half. The probe stays installed on the owner's phone as a running check; FR-081 and FR-082 bound the loss to unsent events if it proves false. |
 
 ## 3. Requirements
 
@@ -831,17 +854,313 @@ hand-written TypeScript interfaces, field for field; a second shall compare
 the receipt's line kinds with the union the page admits. The first sees that a
 line carries a kind; only the second sees which kinds exist.
 
+**NFR-PRIV-004 The recorder opens no connection of its own**: After its files
+have loaded, the recorder shall open no connection. The page carries a
+Content-Security-Policy of `default-src 'self'`, `script-src 'self'
+'wasm-unsafe-eval'` and `connect-src 'none'`; the second is what lets the Go
+code compile (M-6) and grants no network access. The
+one fetch is the browser's own: checking the recorder's host for newer copies
+of its files. Nothing from the record is involved. Verified by a test reading
+the recorder's `index.html`, plus a network log taken on each platform.
+
+**NFR-PRIV-005 The host**: The recorder shall be served as static files from an
+origin that sets no cookie and on which no page loads a script from another
+origin (Q-13). Verified by reading the response headers of every file the
+recorder loads, plus a structural test over every page published to that
+origin.
+
+**NFR-PRIV-006 Encryption at rest on the phone**: The recorder's events are not
+encrypted at rest; they are protected by the phone's own lock. This non-claim
+shall be stated in the README beside NFR-PRIV-003's.
+
+**NFR-REL-002 Durability on the phone**: An event the recorder reports as
+recorded shall still be held after the phone closes the recorder one second
+later. Verified by probe M-3, then a manual check on each platform.
+
+**NFR-USE-005 Recording speed on the phone**: Recording an event of an existing
+symptom with no note shall take no more than 2 taps after the first letters of
+the symptom: the suggestion, then `Record`. Held as NFR-USE-001 is: by a test of
+the path rather than a count of taps.
+
+**NFR-USE-006 Contrast**: The recorder shall meet NFR-USE-003's contrast rule,
+from the same colour tokens.
+
+**NFR-USE-007 Touch targets**: Every control on the recorder shall present a
+target of at least 44 by 44 CSS pixels (WCAG 2.2, 2.5.5). Verified by a
+structural test over the recorder's styles.
+
+**NFR-PORT-001 Platforms**: The recorder shall run installed to the home
+screen in Chrome 157 or later on Android (D-1, Q-14). Measured on Chrome 157
+on a Samsung Galaxy Z Flip 5.
+
+**NFR-MAINT-006 Coverage**: The recorder's rules and use cases shall be held at
+100% statement coverage by the same gate as NFR-MAINT-001.
+
+**NFR-MAINT-007 The file on both sides**: The recorder's file shall be held to
+FR-051 by the desktop reading it (FR-093) and by the recorder reading the
+desktop's committed sample.
+
 ### 3.9 Won't this time
 
 | Item | Reason |
 |---|---|
 | Other event types (medication, meal, sleep) | Source 14: version 1 stays on symptoms. The event table carries a kind column so they can follow without a migration of existing rows. |
-| Phone or web version | Platform decided 2026-09-22: the desktop, which Amendment 7 widened to all three desktops rather than to a phone. |
+| The recorder on iPhone | D-1: no device to measure it on. Every behaviour this document relies on (offline opening, storage that survives, sharing a file, telling a completed share from a cancelled one) was measured on Android alone; claiming it for iPhone would be a guess. |
+| A PDF on the phone | D-4. The layout rules (FR-040 onwards) keep one home. |
+| Events travelling from the desktop to the phone | D-3: one direction only. |
+| Editing or deleting a sent event on the phone | D-3. |
+| A live link between phone and desktop, over Wi-Fi or anything else | D-5; NFR-PRIV-001. |
+| An app store listing | 4.1: the store category is promotional material that fixes intended purpose. A listing reopens Q-8. |
+| Filters on the phone's list | The phone's list is a check that recording worked; the history with filters stays on the desktop. |
+| Encryption at rest on the phone | NFR-PRIV-003's non-claim extends to the phone (NFR-PRIV-006). |
 | Synchronisation between machines | Source 11: no cloud. The export is the portability path. |
 | Reminders | Source 10: no nagging. |
 | Charts and trends | Source 10: no interpretation. |
 | Edit history (audit trail) | Source 13 allows one; left out of version 1 (Q-7). |
 | Update check | No network (NFR-PRIV-001). |
+
+### 3.10 Functional requirements: phone recorder (Amendment 21)
+
+A recorder for Android, served from `app.symdiary.com`, that records symptoms offline and hands them to the desktop as an export file. Every behaviour below that the phone's browser owns was measured on a real phone before it was written (Appendix A, M-2 to M-6). Each `Verified by` name in this section is a test still to be written; the rule in section 3 (each name read off the tree) applies once it exists.
+
+Decisions taken by the owner on 2026-11-16:
+
+| ID | Decision |
+|---|---|
+| D-1 | The recorder runs on Android first. iPhone waits until it can be measured: the owner has no iPhone, so none of M-2 to M-5 can be read there (revised 2026-11-16 from "iPhone and Android from the first release"). |
+| D-2 | The phone keeps every event it records; nothing is removed after a send. |
+| D-3 | Once an event has been sent, the desktop owns its corrections; the phone edits only what it has not sent. The export format stays at version 1. |
+| D-4 | The PDF stays on the desktop; the phone does not draw one. |
+| D-5 | No Wi-Fi link: the handover is a file moved by the phone's own sharing, so NFR-PRIV-001 stands unchanged on the desktop. |
+| D-6 | A send carries only the events not yet sent; `Send again` repeats the last batch for a file that never arrived. Sending the whole phone record is not offered (Q-11). |
+| D-7 | The recorder is served from `app.symdiary.com`, an origin of its own (Q-13). |
+| D-8 | The recorder lives in the SymDiary repository (Q-16). |
+| D-9 | The recorder shares a `.txt` file holding export format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json` (Q-17, M-4). |
+| D-10 | The recorder runs SymDiary's own Go domain and application, compiled to WebAssembly; the rules have one home (Q-12, M-6). |
+
+Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
+
+#### Recording on the phone
+
+**FR-076 Record on the phone**
+- Priority: Must
+- Requirement: When the user presses `Record` with a symptom entered, the
+  recorder shall store one event whose occurrence time is the recording
+  instant, unless the user has set another time.
+- Acceptance: Given the phone's clock reads 2026-11-16T08:05:00+00:00, symptom
+  `Tired` and no note, when `Record` is pressed, then the recorder's list shows
+  16 Nov 08:05, `Tired`, with no note and no severity.
+- Verified by: recorder test `record.test` "records now from the clock"
+
+**FR-077 The desktop's recording rules hold on the phone**
+- Priority: Must
+- Requirement: The recorder shall refuse every event the desktop refuses under
+  FR-002 (blank symptom) and FR-006 (future occurrence), with the same wording.
+- Rationale: one product, one set of rules; a refusal on one side that is
+  accepted on the other teaches the user that the rule is negotiable.
+- Verified by: one case table run against both implementations (Q-12 decides
+  whether there are two).
+
+**FR-078 Recording offline**
+- Priority: Must
+- Requirement: While the phone has no network connection, the recorder shall
+  open from the home screen and record.
+- Verified by: probe M-2, then a manual check on each platform in D-1.
+
+**FR-079 Kept on the phone**
+- Priority: Must
+- Requirement: The recorder shall keep its events in the browser's storage for
+  its own address, so they remain after the recorder is closed and after the
+  phone restarts.
+- Verified by: probe M-3; recorder test "events survive a reload"
+
+**FR-080 Persistent storage asked for**
+- Priority: Must
+- Requirement: When the recorder first opens, the recorder shall ask the
+  browser to keep its storage persistent.
+- Verified by: recorder test "asks for persistent storage on first open"
+
+**FR-081 Persistent storage refused**
+- Priority: Must
+- Requirement: If the browser declines persistent storage, then the recorder
+  shall say on its main screen that the phone may clear unsent events and that
+  sending is how to keep them.
+- Verified by: recorder test "says so when storage is not persistent"
+
+**FR-082 Unsent count**
+- Priority: Must
+- Requirement: The recorder shall show the number of events not yet sent,
+  together with the date of the oldest of them.
+- Rationale: browser storage can be cleared by the phone. The desktop holds the
+  master record, so the loss is bounded by what has not been sent; the user
+  needs to see that bound.
+- Acceptance: Given three unsent events, the oldest recorded 12 Nov, the main
+  screen reads `3 not yet sent, oldest 12 Nov`.
+- Verified by: recorder test "names the unsent count and the oldest"
+
+**FR-083 Symptom suggestions on the phone**
+- Priority: Must
+- Requirement: The recorder shall offer the symptoms it has already recorded,
+  matched as FR-011 matches them and folded as FR-014 folds them.
+- Verified by: the FR-011 and FR-014 case tables run against the recorder.
+
+**FR-084 Symptoms seeded from the desktop**
+- Priority: Could
+- Requirement: When the user opens a desktop export file in the recorder, the
+  recorder shall add the file's symptom definitions to its suggestions.
+- Rationale: the same words on both sides keep the desktop's list from
+  growing near-duplicates.
+- Verified by: recorder test "an opened export adds its definitions"
+
+**FR-085 Seeding takes no events**
+- Priority: Could
+- Requirement: When the recorder reads a desktop export file, the recorder
+  shall store none of the file's events.
+- Rationale: D-3, one direction only.
+- Verified by: recorder test "an opened export adds no events"
+
+**FR-100 The form before the rules**
+- Priority: Must
+- Requirement: While the Go rules are still loading, the recorder shall show
+  the recording form, accept typing into it and show `Record` as disabled.
+- Rationale: D-10. The rules took 496 ms to start on the measured phone (M-6);
+  typing a symptom takes longer than that, so nobody waits if the form does not.
+- Verified by: recorder test "the form takes input before the rules load"
+
+**FR-101 A failed write on the phone**
+- Priority: Must
+- Requirement: If the phone's storage cannot write an event, then the recorder
+  shall keep everything entered in the form and shall say that the event was
+  not saved, naming the reason.
+- Rationale: FR-009's rule, on the phone.
+- Verified by: recorder test "a refused write loses nothing typed"
+
+**FR-102 Stored data from a newer recorder**
+- Priority: Must
+- Requirement: If the phone's storage holds data written by a newer recorder
+  than the one running, then the recorder shall refuse to open it and shall
+  say so, rather than read it.
+- Rationale: 4.4's rule for the desktop's own schema, on the phone.
+- Verified by: recorder test "a newer stored schema is refused"
+
+#### Correcting on the phone
+
+**FR-086 Edit before sending**
+- Priority: Must
+- Requirement: While an event has not been sent, the recorder shall let the
+  user change its symptom, occurrence time, severity and note.
+- Verified by: recorder test "edits an unsent event"
+
+**FR-087 Delete before sending**
+- Priority: Must
+- Requirement: While an event has not been sent, when the user asks to delete
+  it, the recorder shall ask first, naming the event, then delete it only on
+  confirmation.
+- Verified by: recorder test "asks before deleting an unsent event"
+
+**FR-088 Sent events are final on the phone**
+- Priority: Must
+- Requirement: If the user tries to edit or delete a sent event, then the
+  recorder shall refuse, saying that a sent event is corrected on the desktop.
+- Verified by: recorder test "refuses to change a sent event"
+
+#### Sending
+
+**FR-089 Send**
+- Priority: Must
+- Requirement: When the user presses `Send`, the recorder shall write a file in
+  export format version 1 (FR-051) holding every event not yet sent, then offer
+  it to the phone's share sheet (D-6).
+- Acceptance: Given five events of which two are sent, when `Send` is pressed,
+  then the file holds the three unsent events and no others.
+- Verified by: probe M-4; recorder test "send offers one file of format 1"
+
+**FR-090 Sent only when the share completes**
+- Priority: Must
+- Requirement: When the share sheet reports the file shared, the recorder shall
+  mark the batch's events as sent.
+- Verified by: probe M-5; recorder test "a completed share marks the batch"
+
+**FR-091 Share cancelled or failed**
+- Priority: Must
+- Requirement: If the share sheet is dismissed or reports a failure, then the
+  recorder shall mark nothing as sent.
+- Verified by: recorder test "a cancelled share marks nothing"
+
+**FR-092 Nothing to send**
+- Priority: Must
+- Requirement: While no event is unsent, the recorder shall show `Send` as
+  disabled.
+- Verified by: recorder test "send is disabled with nothing unsent"
+
+**FR-093 The desktop reads what the phone wrote**
+- Priority: Must
+- Requirement: The desktop application shall import a file the recorder wrote
+  under FR-053, unchanged.
+- Acceptance: Given a desktop record of 40 events and a recorder file of 3 new
+  events, when the file is imported, then the desktop reports 3 added, 0
+  skipped; importing it again reports 0 added, 3 skipped.
+- Verified by: a file written by the recorder's own code, committed under
+  `testdata`, read by `transfer_test.go` on every run.
+
+**FR-094 File name**
+- Priority: Should
+- Requirement: The recorder shall name each file
+  `SymDiary-phone-<date>-<time>.txt` in local time, so a reader can tell
+  batches apart in a folder.
+- Rationale: Chrome on Android refuses to share a `.json` file and shares a
+  `.txt` one (M-4, D-9). The contents stay format version 1.
+- Acceptance: a send at 16 Nov 2026 17:12 writes
+  `SymDiary-phone-2026-11-16-1712.txt`.
+- Verified by: recorder test "names the file by the send's local time"
+
+**FR-098 The desktop's Import lists text files**
+- Priority: Must
+- Requirement: When the user opens the desktop application's Import dialog,
+  the dialog shall list files ending `.txt` as well as files ending `.json`.
+- Rationale: D-9. The reader decides by contents (the `format` and `version`
+  envelope), so a `.txt` that is not a SymDiary record is refused as any foreign
+  file is (FR-053).
+- Acceptance: Given `SymDiary-phone-2026-11-16-1712.txt` in Downloads holding
+  one event, when Import is opened, then the file is listed; when it is chosen,
+  then the desktop reports one event imported.
+- Verified by: `window_test.go` "the import dialog lists text and JSON"; a
+  `.txt` sample under `testdata` read by `export_test.go`.
+
+**FR-099 A foreign text file is refused**
+- Priority: Must
+- Requirement: If the user imports a `.txt` file that is not a SymDiary
+  record, then the desktop application shall import nothing and shall say the
+  file is not a SymDiary record, naming it.
+- Verified by: `export_test.go` "a text file that is not a record is refused"
+
+**FR-095 Send again**
+- Priority: Must
+- Requirement: When the user confirms `Send again`, the recorder shall write a
+  file holding the last batch, then offer it to the phone's share sheet.
+- Rationale: FR-090 marks a batch sent once the share sheet completes, which is
+  not proof the file reached the desktop (M-5). Without this, a lost file
+  leaves its events marked sent with no way to send them.
+- Acceptance: Given a last batch of three events, followed by two events
+  recorded since, when `Send again` is confirmed, then the file holds the same
+  three events and not the two.
+- Verified by: recorder test "send again repeats the last batch"
+
+**FR-096 Send again warns first**
+- Priority: Must
+- Requirement: When the user presses `Send again`, the recorder shall ask
+  first, saying that an event of that batch since corrected or deleted on the
+  desktop comes back if the file is imported again.
+- Rationale: the desktop matches events by all five fields
+  (`internal/domain/event.go:47`), so the phone's original copy is a new event
+  to it once the desktop's copy has changed.
+- Verified by: recorder test "send again asks first, naming the risk"
+
+**FR-097 No batch to repeat**
+- Priority: Must
+- Requirement: While no send has completed, the recorder shall show
+  `Send again` as disabled.
+- Verified by: recorder test "send again is disabled before the first send"
 
 ## 4. Other requirements
 
@@ -954,6 +1273,11 @@ any internal structure. Those change whenever they are improved.
 | ID | Question | Measured |
 |---|---|---|
 | M-1 | Can the application draw the record itself, so that it reads the same on every desktop? | Yes; it had to. Measured 2026-09-22 in the built window, `window.print()` opened the Windows print dialog and printed the receipt alone; measured again on all three desktops, the same page printed three different ways, with the browser's own header and footer reaching the paper unless the reader had turned them off. Since Amendment 16 the document is drawn in Go. Measured 2026-09-23 by writing a record and reading the text positions back out of it: A4, `Page N of M` on every page in order, the first line 19.3mm to 19.8mm from the top of every page, no event split across two sheets and nothing on the paper the record does not hold. |
+| M-2 | Does an installed recorder open and record with the network off, on iPhone and on Android? | **Measured 2026-11-16, Android, Chrome 157: yes.** Installed through the page's own install offer (`beforeinstallprompt`), reopened in airplane mode, an event was recorded with the note "Offline, installed, probe-2", shared later as `.txt`, then imported into the desktop: the second import of the same file reported "Imported 0 events. Skipped 2 events already in your record." (FR-093's acceptance, end to end). iPhone untested (no device). |
+| M-3 | Is persistent storage granted on each? What does iPhone do to an installed web app's storage after weeks unused? | **Measured 2026-11-16, Android, Chrome 157:** the installed probe reads "Persisted: true", 7,789,913 bytes used of 10,745,208,153. Not measured: whether events survive weeks unused. That half is assumption A-5 rather than a blocker; FR-081 and FR-082 bound the loss to unsent events either way. |
+| M-4 | Can the recorder hand a JSON file to the share sheet on each? Which routes reach a Windows desktop, a Mac and a Linux desktop? | **Partly measured 2026-11-16, Android, Chrome 157:** `navigator.share` and `canShare` both present; `canShare` answered true for every variant, yet the share of a `.json` file was refused within 8 ms with `NotAllowedError: Permission denied`, whether declared `application/json` or `text/plain`. The same contents as `.txt`, declared `text/plain`, opened the share sheet. The extension decides; `canShare` does not predict it. Still open: which routes reach each desktop; iPhone untested (no device). |
+| M-5 | Does the share call tell a completed share from a cancelled one on each? | **Measured 2026-11-16, Android (Galaxy Z Flip 5), Chrome 157: yes.** A share completed through Gmail resolved after 9,646 ms; a share dismissed without choosing an app rejected after 1,914 ms with `AbortError: Share canceled`. FR-090 and FR-091 stand as written. Resolving means the receiving app took the file, not that it reached the desktop, so FR-095 stays the recovery for a file lost after that. iPhone untested (no device). |
+| M-6 | Does `internal/domain` build for WebAssembly? At what download size? | **Measured 2026-11-16: yes.** `internal/domain` and `internal/application` build for `js/wasm` under Go 1.26.3. Linked together: 2,765,198 bytes, 791,305 at gzip -9, plus Go's 16,992 byte `wasm_exec.js`. Loaded as base64 inside a script file, since `connect-src 'none'` forbids fetching it, which needs `'wasm-unsafe-eval'` in `script-src`. Started in 130 ms in desktop Chromium; 496 ms on the Galaxy Z Flip 5 in Chrome 157, where `KeyOf("  Tired  ")` answered `"tired"` and an empty record was refused with Go's own wording. |
 
 ### Appendix B: Open questions
 
@@ -976,6 +1300,18 @@ Nothing is still open. Every question raised while this specification was
 written has been answered; each answer lives in the requirement or the file
 named beside it.
 
+Decided by the owner on 2026-11-16 (Amendment 21):
+
+| ID | Question | Decision | Owner |
+|---|---|---|---|
+| Q-11 | What does a send carry? | **Decided 2026-11-16 (D-6):** only the events not yet sent, plus `Send again` for the last batch. Reason, read from the source the same day: the desktop matches events by all five fields (`internal/domain/event.go:47`), so with D-2 a whole-record send after a desktop correction adds the phone's original copy back as a second event, while a deletion on the desktop is undone. The residual risk sits on `Send again` alone, which warns first (FR-096). Lives in FR-089, FR-095 to FR-097. | Oliver |
+| Q-12 | One home for the recording rules: the Go domain compiled to WebAssembly versus a TypeScript copy held equal by shared case tables? | **Decided 2026-11-16 (D-10): the Go domain and application compiled to WebAssembly.** The house rule settles it: a second copy of the rules is a defect, not a trade-off. M-6 shows it works on the phone. Its 496 ms start becomes a constraint on the design: the form appears at once and Go loads behind it (FR-100). | Oliver |
+| Q-13 | Where is the recorder served from? | **Reopened 2026-11-16.** Answered "under symdiary.com", then a measurement contradicted it: every page of the site (`docs/index.html`, `features.html`, `why.html`, `download.html`) loads GoatCounter's `count.js` from `gc.zgo.at`. Browser storage belongs to an origin rather than a path (general platform knowledge, not measured here), so a recorder at `symdiary.com/recorder/` shares its events with pages running a third-party script, which NFR-PRIV-005 forbids. **Decided the same day: a subdomain, `app.symdiary.com`**, a separate origin the site's scripts cannot reach; the site keeps its counter. How it is deployed is left to the architecture stage, since GitHub Pages serves one custom domain per Pages site (general knowledge, not measured here). | Oliver |
+| Q-14 | Minimum phone versions? | **Decided 2026-11-16: Chrome 157 on Android**, the version every probe was measured on. An older Chrome is not claimed. | Oliver |
+| Q-15 | Does a phone recorder change 4.1's MHRA reading? | **Decided 2026-11-16:** no. The intended purpose is unchanged (a written symptom diary's replacement, MHRA v1.10f page 21). The standing rules carry over: no store listing, no health category, nothing that enhances the data presented. | Oliver |
+| Q-17 | Chrome on Android shares `.txt` but not `.json` (M-4). How does the file reach the desktop? | **Decided 2026-11-16 (D-9): share as `.txt`.** Lives in FR-094, FR-098, FR-099. As proposed: the recorder shares `SymDiary-phone-<date>-<time>.txt` holding format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json`. The reader already decides by contents (the `format` and `version` envelope), so a `.txt` that is not a SymDiary record is refused as any foreign file is. Cost: a desktop change, plus a name that no longer says what the file holds, which the desktop has avoided before (`app.go:25`). Alternative: keep `.json` through `Download the file instead` only, leaving the user to move it from the phone's Downloads folder by hand. | Oliver |
+| Q-16 | Same repository or a new one? | **Decided 2026-11-16:** the same. FR-093 and NFR-MAINT-007 tie the two sides together, so one gate sees both. | Oliver |
+
 ### Appendix C: Build order
 
 1. Domain: event, symptom definition, severity, occurrence rules (FR-002,
@@ -987,10 +1323,23 @@ named beside it.
 5. Setup program, ported from ED Voyage Companion.
 6. Docs: README, ARCHITECTURE, TESTING, DEVELOPMENT.
 
+The phone recorder (Amendment 21), in the same order:
+
+1. Domain and application: unchanged, built for `js/wasm` on every gate run,
+   so a change the phone cannot run fails at once.
+2. Desktop: FR-098 and FR-099, the Import dialog listing `.txt`.
+3. Infrastructure on the phone: the browser storage behind the application's
+   store port, with its schema version (FR-102); the file the share sheet is
+   given. Still to settle here: two copies of the recorder open at once
+   writing the same storage.
+4. UI on the phone: the recording form, the list, `Send` and `Send again`.
+5. Deploy to `app.symdiary.com`.
+
 ## 6. Amendments
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 21 | 2026-11-16 | 1.3, 1.4, 2.1, 2.3, C-9, A-5, new 3.10 (FR-076 to FR-102), new NFR-PRIV-004 to 006, NFR-REL-002, NFR-USE-005 to 007, NFR-PORT-001, NFR-MAINT-006 and 007, 3.9, Appendices A to C | A phone recorder for Android joins the product. It records offline, keeps every event, edits only what it has not sent and hands unsent events to the desktop as a `.txt` file holding export format version 1 through the share sheet; the desktop's Import lists `.txt` beside `.json`. It runs the desktop's own Go rules compiled to WebAssembly, served from `app.symdiary.com`. The 3.9 row "Phone or web version" goes; iPhone joins 3.9. Synchronisation between machines stays out of scope. | Owner's request: symptoms are noticed away from the desk, so the recorder belongs where they are noticed. Every behaviour the phone's browser owns was measured on the owner's Galaxy Z Flip 5 in Chrome 157 before it was written (M-2 to M-6). Two of those measurements changed the design: Chrome refuses to share `.json` whatever it is declared as, so the file is `.txt` (D-9); the desktop matches events on all five fields, so a send carries only unsent events or a correction made on the desktop would come back (D-6). A Wi-Fi link was rejected because it would break NFR-PRIV-001 and needs a certificate the phone trusts; the subdomain because symdiary.com and ernster.dev both load a third-party counter, which would share the recorder's storage. |
 | 20 | 2026-10-03 | FR-040, FR-041, FR-053 | Five corrections from an audit of the shipped 1.2.0. (1) An event too tall for any page continues onto the next, which opens with the event's time again; an event that fits is still never split. (2) A note's line breaks reach the sheet. (3) A word wider than the line is broken at the line. (4) Save PDF refuses, naming them, characters the carried typeface cannot print, before asking where to save. (5) An import refuses a symptom kept with no events whose name is blank, as it already refused a blank event. Separately, an import made while the record or the history is showing now refreshes it. | Each was measured before it was changed. A single note of 5,059 characters ran off the foot of its page while the document reported success; a note's line breaks printed as one line; a 220 character address ran 375mm wide on a 210mm sheet; the typeface has no glyph for Chinese, Japanese, Korean, Arabic, Hebrew, Devanagari or emoji, which printed as empty boxes; a blank symptom name was imported as a blank entry. The refresh closes the path Amendment 19 left: an import from the band under a record on screen. Owner's rulings the same day: continue rather than shrink, refuse rather than carry a font for every script, break rather than leave whole; an import keeps future times as the file states them (DECISIONS-TRADEOFFS.md). Verified by `internal/infrastructure/pdf/layout_test.go::TestAnEventTallerThanAPageContinuesWithItsTimeRepeated`, `TestANoteKeepsItsLineBreaks`, `TestAWordWiderThanTheLineIsBrokenAtTheLine`; `sheet_test.go::TestCharactersTheTypefaceCannotPrintAreRefusedByName`, `TestTheTypefacePrintsTheEuropeanScripts`; `pdf_test.go::TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave`; `export_test.go::TestReadRefusals` ("blank definition"); `frontend/src/App.test.tsx`, "shows an imported event in the record already on screen" and "... in the history already on screen". |
 | 19 | 2026-10-03 | FR-040, FR-041, FR-042, FR-046 | The sheet names the last appointment, `Last appointment: 02 Sep 2026`, under the date range whenever the range covers it; a `Show on the sheet` box, ticked by default, lets the reader leave it off. Once the record is showing, changing the range refreshes it. | Owner's request, superseding Amendment 18's ruling that the sheet never mentions the appointment. The reader of the sheet benefits from knowing where the last consultation falls: what has already been heard and what is new is the first thing a doctor asks of the record; the comparison is the doctor's to make. The rule is the range rather than how it was chosen, so a custom range spanning the appointment names it too, while a range that does not cover it names nothing, where the line would be noise. The line sits beside the range and never among the events, so the software arranges nothing around it (4.1). The opt-out is for a reader who would rather the date not reach paper. The refresh answers a defect the owner found: the record on screen stayed on the old range while Save PDF wrote the new one, so the two could differ. |
 | 18 | 2026-10-03 | New FR-046, FR-068 | The receipt pane holds the date of the last appointment and offers `Since last appointment` beside `Custom dates`. The Guide says so. | Owner's request. The product exists for the walk from recording to the appointment; the date of the last one is the boundary a person reaches for. Typing it again each time is friction with nothing to show for it. Owner's rulings the same day: the date lives in the window's storage rather than the record, so the record stays observations alone and the export format stays at version 1; the appointment's own day is included, since an event seen twice costs the reader nothing while an afternoon event left off costs something; one date, today or earlier, so it stays a boundary rather than becoming a calendar. The sheet is unchanged: the MHRA caveat in 4.1 concerns features that enhance the data presented; the data presented is identical. |
