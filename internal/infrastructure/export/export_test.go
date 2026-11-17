@@ -79,6 +79,44 @@ func TestExportWritesEveryEventAndReadsBack(t *testing.T) {
 	}
 }
 
+func TestAPhoneSendReadsAsText(t *testing.T) {
+	t.Parallel()
+	// The phone shares its send as .txt (D-9); the reader decides by contents,
+	// so the name's extension changes nothing (FR-098).
+	encoded, err := (File{}).Encode(sampleRecord())
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "SymDiary-phone-2026-11-16-1712."+application.ParcelExtension)
+	if err := os.WriteFile(path, encoded, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	read, err := (File{}).Read(path)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if len(read.Events) != 1 || !domain.SameEvent(read.Events[0], sampleRecord().Events[0]) {
+		t.Errorf("read back %+v", read.Events)
+	}
+}
+
+func TestATextFileThatIsNotARecordIsRefusedByName(t *testing.T) {
+	t.Parallel()
+	// A .txt beside the phone's sends in Downloads is listed too, so the
+	// refusal names the file it refused (FR-099).
+	path := filepath.Join(t.TempDir(), "shopping."+application.ParcelExtension)
+	if err := os.WriteFile(path, []byte("milk\neggs\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := (File{}).Read(path)
+	if !errors.Is(err, ErrNotAnExport) {
+		t.Fatalf("Read = %v, want %v", err, ErrNotAnExport)
+	}
+	if !strings.Contains(err.Error(), filepath.Base(path)) {
+		t.Errorf("the refusal %q does not name the file", err)
+	}
+}
+
 func TestFailedExportLeavesNothing(t *testing.T) {
 	t.Parallel()
 	folder := t.TempDir()

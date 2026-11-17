@@ -4,8 +4,12 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/oernster/symdiary/internal/application"
 )
 
 func TestDownloadsIsWhereTheDialogsOpen(t *testing.T) {
@@ -28,6 +32,24 @@ func TestDownloadsIsWhereTheDialogsOpen(t *testing.T) {
 	t.Setenv("USERPROFILE", file)
 	if got := downloads(); got != "" {
 		t.Errorf("a Downloads that is not a folder = %q, want the empty string", got)
+	}
+}
+
+func TestTheImportDialogListsTextAndJSON(t *testing.T) {
+	t.Parallel()
+	// One filter carrying both, so the phone's .txt sends are listed without
+	// the user finding a second filter (FR-098).
+	filters := importFilters()
+	if len(filters) != 1 {
+		t.Fatalf("import offers %d filters, want 1", len(filters))
+	}
+	got := strings.Split(filters[0].Pattern, ";")
+	want := []string{"*." + exportKind.extension, "*." + application.ParcelExtension}
+	if !slices.Equal(got, want) {
+		t.Errorf("the import pattern lists %v, want %v", got, want)
+	}
+	if !strings.Contains(filters[0].DisplayName, filters[0].Pattern) {
+		t.Errorf("the filter %q does not show the user what it lists", filters[0].DisplayName)
 	}
 }
 

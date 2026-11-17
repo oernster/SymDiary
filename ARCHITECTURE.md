@@ -213,10 +213,14 @@ to avoid.
 
 | The file says | What happens |
 |---|---|
-| A different `format` (or nothing that parses as JSON) | Refused: not a SymDiary export |
+| A different `format` (or nothing that parses as JSON) | Refused: not a SymDiary record |
 | No `version` (or one below 1) | Refused. An unversioned file is not one SymDiary wrote; a record is not the thing to be generous about |
 | A version SymDiary knows | Read by that version's own reader |
 | A version above the current one | Refused, naming the version, so the user knows a newer SymDiary wrote it |
+
+Every refusal names the file. The Import dialog lists `.txt` beside `.json`,
+because the phone's sends arrive as text, so the file refused is not always the
+one the user meant to choose.
 
 Adding a version is three things, all of which the suite refuses the change
 until you have done: raise `formatVersion`, add a reader to the table in

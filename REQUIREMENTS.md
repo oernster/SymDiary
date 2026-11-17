@@ -1137,15 +1137,16 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Acceptance: Given `SymDiary-phone-2026-11-16-1712.txt` in Downloads holding
   one event, when Import is opened, then the file is listed; when it is chosen,
   then the desktop reports one event imported.
-- Verified by: `window_test.go` "the import dialog lists text and JSON"; a
-  `.txt` sample under `testdata` read by `export_test.go`.
+- Verified by: `window_test.go::TestTheImportDialogListsTextAndJSON` and
+  `export_test.go::TestAPhoneSendReadsAsText`; that the dialog shows both is
+  checked by hand in a real build.
 
 **FR-099 A foreign text file is refused**
 - Priority: Must
 - Requirement: If the user imports a `.txt` file that is not a SymDiary
   record, then the desktop application shall import nothing and shall say the
   file is not a SymDiary record, naming it.
-- Verified by: `export_test.go` "a text file that is not a record is refused"
+- Verified by: `export_test.go::TestATextFileThatIsNotARecordIsRefusedByName`
 
 **FR-095 Send again**
 - Priority: Must

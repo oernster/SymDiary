@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/oernster/symdiary/internal/infrastructure/windowfocus"
@@ -18,6 +19,21 @@ func (k fileKind) filters() []runtime.FileFilter {
 	return []runtime.FileFilter{{
 		DisplayName: fmt.Sprintf("%s (*.%s)", k.describes, k.extension),
 		Pattern:     "*." + k.extension,
+	}}
+}
+
+// importFilters lists every file Import reads (importExtensions). One filter
+// joins the patterns, so neither kind is hidden behind a choice the user has to
+// find; Wails splits a pattern on ";" on all three desktops.
+func importFilters() []runtime.FileFilter {
+	globs := make([]string, len(importExtensions))
+	for i, extension := range importExtensions {
+		globs[i] = "*." + extension
+	}
+	patterns := strings.Join(globs, ";")
+	return []runtime.FileFilter{{
+		DisplayName: fmt.Sprintf("%s (%s)", exportKind.describes, patterns),
+		Pattern:     patterns,
 	}}
 }
 
@@ -55,7 +71,7 @@ func (c windowChooser) SavePath(suggested string, kind fileKind) (string, error)
 func (c windowChooser) OpenPath() (string, error) {
 	return runtime.OpenFileDialog(c.app.ctx, runtime.OpenDialogOptions{
 		Title: "Import a record", DefaultDirectory: downloads(),
-		Filters: exportKind.filters(),
+		Filters: importFilters(),
 	})
 }
 

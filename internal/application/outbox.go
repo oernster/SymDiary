@@ -8,11 +8,15 @@ import (
 	"github.com/oernster/symdiary/internal/product"
 )
 
+// ParcelExtension is the extension a send from the phone carries: text,
+// because Chrome on Android refuses to share a .json file (M-4, D-9). The
+// contents are export format version 1 all the same, which is why the
+// desktop's Import lists it (FR-098).
+const ParcelExtension = "txt"
+
 // parcelNameLayout names a send in the phone's local time, so a reader can
-// tell batches apart in a folder (FR-094). The extension is .txt because
-// Chrome on Android refuses to share a .json file (M-4, D-9); the contents
-// are export format version 1 all the same.
-const parcelNameLayout = "-phone-2006-01-02-1504.txt"
+// tell batches apart in a folder (FR-094).
+const parcelNameLayout = "-phone-2006-01-02-1504." + ParcelExtension
 
 // Waiting is what the phone shows about its unsent events (FR-082).
 type Waiting struct {

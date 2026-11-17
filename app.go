@@ -40,6 +40,10 @@ var (
 	}
 )
 
+// importExtensions are every extension Import lists: the desktop's own export
+// and the phone's send, which arrives as text (FR-098).
+var importExtensions = []string{exportKind.extension, application.ParcelExtension}
+
 // fileChooser asks the user where to write or read a file. An empty path with
 // no error means the user cancelled.
 type fileChooser interface {

@@ -38,7 +38,7 @@ const tempPattern = ".symdiary-export-*.tmp"
 
 // The refusals a read can answer.
 var (
-	ErrNotAnExport = errors.New("not a SymDiary export")
+	ErrNotAnExport = errors.New("not a SymDiary record")
 	ErrNewerFormat = errors.New("written by a newer SymDiary")
 	ErrTooLarge    = errors.New("larger than any SymDiary export")
 	// ErrNoVersion refuses a file that claims to be an export but names no
@@ -129,8 +129,18 @@ func writeAtomically(path string, data []byte) (err error) {
 }
 
 // Read reads a record from path, refusing anything that is not a SymDiary export
-// this version can read.
+// this version can read. Every refusal names the file, since the phone's sends
+// and any other text file sit side by side in the Import dialog (FR-099).
 func (File) Read(path string) (application.Record, error) {
+	record, err := read(path)
+	if err != nil {
+		return application.Record{}, fmt.Errorf("%s: %w", filepath.Base(path), err)
+	}
+	return record, nil
+}
+
+// read is Read without the file's name on its refusals.
+func read(path string) (application.Record, error) {
 	opened, err := os.Open(path)
 	if err != nil {
 		return application.Record{}, err
