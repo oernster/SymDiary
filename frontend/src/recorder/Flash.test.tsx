@@ -22,6 +22,16 @@ describe('a message flashed wherever the page is scrolled (FR-107)', () => {
     expect(screen.getByTestId('flash')).toHaveTextContent('Refused.')
   })
 
+  it("is the page's status region, kept while nothing shows", () => {
+    vi.useFakeTimers()
+    render(<Flash said={{ text: 'Deleted 1 event.', count: 1 }} />)
+    const region = screen.getByRole('status')
+    expect(region).toHaveTextContent('Deleted 1 event.')
+    act(() => vi.advanceTimersByTime(flashFor))
+    expect(screen.getByRole('status')).toBe(region)
+    expect(region).toBeEmptyDOMElement()
+  })
+
   it('shows nothing when nothing has been said', () => {
     render(<Flash said={null} />)
     expect(screen.queryByTestId('flash')).toBeNull()

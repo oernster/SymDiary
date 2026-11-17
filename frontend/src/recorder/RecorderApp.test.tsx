@@ -113,7 +113,10 @@ describe('the phone recorder', () => {
 
 describe('correcting on the phone', () => {
   /** alreadySent is Go's refusal for an event the desktop holds (application.ErrAlreadySent). */
-  const alreadySent = 'this event has been sent to the desktop, so it is corrected there'
+  const alreadySent = 'this event has been sent to the desktop, so it is corrected there.'
+
+  /** flashed finds words in the flash, inside the page's status region (FR-107). */
+  const flashed = { selector: '[role=status] > [data-testid=flash]' }
 
   /** opened presses Edit on the only event, answering its editor; the recording form is beside it. */
   async function opened(symptom: string) {
@@ -134,7 +137,7 @@ describe('correcting on the phone', () => {
     await waitFor(() =>
       expect(bridge.Edit).toHaveBeenCalledWith(anEvent.id, expect.objectContaining({ note: 'Since lunch.' })),
     )
-    expect(await screen.findByText(`Saved the ${anEvent.symptom} event of ${anEvent.when}.`, { selector: '[role=status]' })).toBeInTheDocument()
+    expect(await screen.findByText(`Saved the ${anEvent.symptom} event of ${anEvent.when}.`, flashed)).toBeInTheDocument()
   })
 
   it('asks before deleting an unsent event, naming it (FR-087)', async () => {
@@ -150,7 +153,7 @@ describe('correcting on the phone', () => {
     expect(bridge.Delete).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('alertdialog').querySelector('.danger') as HTMLElement)
     await waitFor(() => expect(bridge.Delete).toHaveBeenCalledWith([anEvent.id]))
-    expect(await screen.findByText('Deleted 1 event.', { selector: '[role=status]' })).toBeInTheDocument()
+    expect(await screen.findByText('Deleted 1 event.', flashed)).toBeInTheDocument()
   })
 
   it('refuses to delete a sent event before asking, saying where it is corrected (FR-088)', async () => {
@@ -160,9 +163,10 @@ describe('correcting on the phone', () => {
     })
     renderApp()
     fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
-    expect(await screen.findByRole('status')).toHaveTextContent(sentence(alreadySent))
-    // Flashed at the foot as well, where the reader who pressed Delete is looking (FR-107).
-    expect(screen.getByTestId('flash')).toHaveTextContent(sentence(alreadySent))
+    // Flashed at the foot, where the reader who pressed Delete is looking; it
+    // shows nowhere else, with no second copy at the top of the page (FR-107).
+    expect(await screen.findByText(sentence(alreadySent), flashed)).toBeInTheDocument()
+    expect(screen.getAllByText(sentence(alreadySent))).toHaveLength(1)
     expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 
@@ -175,7 +179,7 @@ describe('correcting on the phone', () => {
     const editor = await opened(anEvent.symptom)
     fireEvent.change(within(editor).getByLabelText('Note'), { target: { value: 'Since lunch.' } })
     fireEvent.click(within(editor).getByRole('button', { name: 'Save' }))
-    expect(await screen.findByText(sentence(alreadySent), { selector: '[role=status]' })).toBeInTheDocument()
+    expect(await screen.findByText(sentence(alreadySent), flashed)).toBeInTheDocument()
     expect(within(editor).getByLabelText('Note')).toHaveValue('Since lunch.')
   })
 })

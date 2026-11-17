@@ -45,7 +45,7 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
   const [kept, setKept] = useState(true)
   const [about, setAbout] = useState<About | null>(null)
 
-  /** say shows words at the top of the page and flashes them at the foot (FR-107). */
+  /** say flashes words at the foot of the screen, the one place a message shows (FR-107). */
   const say = useCallback(
     (text: string) => setSaid((before) => ({ text, count: (before?.count ?? 0) + 1 })),
     [],
@@ -87,7 +87,6 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
         </p>
       ))}
       {!kept && <p role="status">{notKept}</p>}
-      {said?.text && <p role="status">{said.text}</p>}
       <InstallButton offers={offers} />
       <RecordPane severities={state?.severities ?? []} refused={say} tell={tell} ready={ready} />
       <SendPane waiting={waiting} refused={say} tell={tell} changed={() => void refresh()} />

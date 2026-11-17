@@ -22,8 +22,11 @@ var (
 // The phone recorder's refusals (Amendment 21).
 var (
 	// ErrAlreadySent refuses a change to an event the desktop already holds
-	// (FR-088): the desktop owns its corrections from then on (D-3).
-	ErrAlreadySent   = errors.New("this event has been sent to the desktop, so it is corrected there")
+	// (FR-088): the desktop owns its corrections from then on (D-3). It is
+	// never wrapped, so it is shown whole and ends as a sentence.
+	//
+	//lint:ignore ST1005 shown to the user verbatim as a sentence
+	ErrAlreadySent   = errors.New("this event has been sent to the desktop, so it is corrected there.")
 	ErrNothingToSend = errors.New("there is nothing waiting to be sent")
 	ErrNoBatch       = errors.New("nothing has been sent yet, so there is nothing to send again")
 	ErrNotSent       = errors.New("the send was not recorded")

@@ -1145,19 +1145,22 @@ Priorities: 29 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 **FR-107 A message reaches the user wherever they are**
 - Priority: Must
 - Requirement: When the recorder says something (a refusal, a failure or the
-  outcome of an action), it shall show it at the top of the page as before and
-  shall also flash it, for `flashFor` milliseconds, in a strip fixed to the
-  foot of the screen in the accent colours, whatever part of the page is in
-  view. The same words said again shall flash again. The strip shall take no
-  taps and shall sit beneath an open dialog.
+  outcome of an action), it shall flash it, for `flashFor` milliseconds, in a
+  strip fixed to the foot of the screen in the accent colours, whatever part
+  of the page is in view; it shall not also write it at the top of the page.
+  The same words said again shall flash again. The strip shall sit in the
+  page's status region, so a screen reader announces it. The strip shall take
+  no taps and shall sit beneath an open dialog.
 - Rationale: the page is longer than a phone's screen. A refusal written only
   at the top reached nobody pressing Delete at the foot of the list (owner's
-  report): the button looked as though it did nothing.
+  report): the button looked as though it did nothing. Once the strip carries
+  every message, a second copy at the top only repeats it (owner's ruling).
 - Verified by: `frontend/src/recorder/Flash.test.tsx`, "flashes the words,
-  then clears them" and "flashes the same words again when they are said
-  again"; `frontend/src/recorder/RecorderApp.test.tsx`, "refuses to delete a
-  sent event before asking, saying where it is corrected (FR-088)", which
-  finds the refusal in the flash as well as at the top
+  then clears them", "flashes the same words again when they are said again"
+  and "is the page's status region, kept while nothing shows";
+  `frontend/src/recorder/RecorderApp.test.tsx`, "refuses to delete a sent
+  event before asking, saying where it is corrected (FR-088)", which finds the
+  refusal in the flash and nowhere else on the page
 
 #### Correcting on the phone
 
@@ -1469,7 +1472,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
-| 27 | 2026-11-17 | New FR-107 | Every message the recorder shows at the top of its page also flashes in a strip at the foot of the screen, in the accent colours, for a few seconds, wherever the page is scrolled. | Owner's report from the phone: Delete on a sent event appeared to do nothing. Read in the source: the refusal (FR-088) is written to the status line at the top of the page, while the button sits at the foot of the list, out of sight of each other on a phone. |
+| 27 | 2026-11-17 | New FR-107 | Every message the recorder says flashes in a strip at the foot of the screen, in the accent colours, for a few seconds, wherever the page is scrolled, in place of the line at the top of its page. The strip is the page's status region for a screen reader. | Owner's report from the phone: Delete on a sent event appeared to do nothing. Read in the source: the refusal (FR-088) is written to the status line at the top of the page, while the button sits at the foot of the list, out of sight of each other on a phone. |
 | 26 | 2026-11-17 | FR-104, FR-105 | The browser check looks only for whether file sharing exists; it no longer asks `canShare` about a made-up file. The recorder registers its update watcher before any check that can stop it. | A defect the owner found on the phone: the recorder refused to start, saying the browser lacked file sharing, on the phone where Send had shared a file that same morning. Send needs both functions, so the browser had them; the check's answer about its made-up empty file was the part that failed. Why that answer came back false is not measured. A stopped page also never registered its update watcher, so it could not take up a fix by itself. |
 | 25 | 2026-11-17 | FR-066, new FR-106 | The recorder carries an About of its own. Each build's About credits exactly what that build ships; the desktop's adds the PDF library (go-pdf/fpdf) and the Go fonts it draws the sheet with. | Owner's request for the phone. Measured against `go.mod` and the imports: since the PDF arrived (Amendment 16), the desktop has shipped `github.com/go-pdf/fpdf` and the Go fonts from `golang.org/x/image` while its About named neither. The desktop list would also have credited Wails and SQLite on a phone that ships neither. |
 | 24 | 2026-11-17 | New FR-105 | An installed recorder updates itself: it asks for a newer release whenever it comes back on screen and reloads into one once it has taken over, at once when off screen, otherwise on the user's next return. Its offline cache is named from a digest of every shipped file as well as VERSION. | Owner's ruling: a user will never know to pull the page down. Measured in the preview: the first load after a rebuild still ran the previous bundle, the next load the new one. Read in the build script: a rebuild under the same VERSION that changed only the rules would have left `sw.js` byte for byte the same, so no phone would have seen it. |
