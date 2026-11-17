@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/oernster/symdiary/internal/domain"
@@ -22,17 +23,45 @@ type Editor struct {
 	store Store
 	clock Clock
 	zone  *time.Location
+	sent  Sent
 }
 
-// NewEditor answers an editor over a store, a clock and the user's zone.
+// NewEditor answers an editor over a store, a clock and the user's zone. It
+// treats nothing as sent, which is the desktop's case; the phone recorder
+// hands its own Sent in with WithSent.
 func NewEditor(store Store, clock Clock, zone *time.Location) Editor {
-	return Editor{store: store, clock: clock, zone: zone}
+	return Editor{store: store, clock: clock, zone: zone, sent: NothingSent{}}
+}
+
+// WithSent answers a copy of the editor that refuses to change an event once
+// it has been sent (FR-088).
+func (e Editor) WithSent(sent Sent) Editor {
+	e.sent = sent
+	return e
+}
+
+// refuseSent answers ErrAlreadySent when any of ids has been sent, so a sent
+// event is never edited or deleted here (FR-088, D-3).
+func (e Editor) refuseSent(ids ...domain.EventID) error {
+	sent, err := e.sent.SentIDs()
+	if err != nil {
+		return because(ErrNotRead, err)
+	}
+	for _, id := range ids {
+		if slices.Contains(sent, id) {
+			return ErrAlreadySent
+		}
+	}
+	return nil
 }
 
 // Edit replaces an event's symptom, severity and note, plus its occurrence time
 // where the form carries one. Recorded-at is left alone (FR-007).
 func (e Editor) Edit(id domain.EventID, form EditForm) (domain.Event, error) {
 	if err := domain.CheckLabel(form.Symptom); err != nil {
+		return domain.Event{}, err
+	}
+	if err := e.refuseSent(id); err != nil {
 		return domain.Event{}, err
 	}
 	held, err := e.store.Event(id)
@@ -69,9 +98,13 @@ const (
 // DeletionPrompt answers the confirmation to show before deleting: one event is
 // named by its symptom and time; several are counted.
 func (e Editor) DeletionPrompt(ids []domain.EventID) (string, error) {
-	switch len(ids) {
-	case 0:
+	if len(ids) == 0 {
 		return "", ErrNothingChosen
+	}
+	if err := e.refuseSent(ids...); err != nil {
+		return "", err
+	}
+	switch len(ids) {
 	case 1:
 		held, err := e.store.Event(ids[0])
 		if err != nil {
@@ -88,6 +121,9 @@ func (e Editor) DeletionPrompt(ids []domain.EventID) (string, error) {
 func (e Editor) Delete(ids []domain.EventID) error {
 	if len(ids) == 0 {
 		return ErrNothingChosen
+	}
+	if err := e.refuseSent(ids...); err != nil {
+		return err
 	}
 	if err := e.store.DeleteEvents(ids); err != nil {
 		return because(ErrNotDeleted, err)

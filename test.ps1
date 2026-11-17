@@ -139,6 +139,7 @@ $measured = [ordered]@{
     './internal/facade'                      = 100
     './installer'                            = 69
     './internal/infrastructure/store'        = 92
+    './internal/infrastructure/memstore'     = 100
     './internal/infrastructure/export'       = 91
     './internal/infrastructure/runlog'       = 81
     './internal/infrastructure/pdf'          = 99
@@ -163,9 +164,9 @@ foreach ($package in $measured.Keys) {
 }
 
 # Not gated at all, deliberately: internal/product holds nine constants,
-# tests/structural is itself the guard and setup/setuptest is the double the
-# other two suites are written against. A floor over any of them asserts
-# nothing.
+# tests/structural is itself the guard, setup/setuptest is the double the
+# other two suites are written against and storetest is the Store contract the
+# two stores' suites run. A floor over any of them asserts nothing.
 
 if ($SkipFrontend) {
     Write-Host 'All green (the front end was skipped).'

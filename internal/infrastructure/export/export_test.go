@@ -44,6 +44,23 @@ func TestFormatIsStable(t *testing.T) {
 	}
 }
 
+func TestEncodeAnswersTheBytesWriteWrites(t *testing.T) {
+	t.Parallel()
+	// The phone hands its file to the share sheet instead of a path, so it asks
+	// for the bytes; they must be the very file the desktop writes (FR-093).
+	encoded, err := (File{}).Encode(sampleRecord())
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	want, err := os.ReadFile(filepath.Join("testdata", "sample.json"))
+	if err != nil {
+		t.Fatalf("reading the sample: %v", err)
+	}
+	if strings.ReplaceAll(string(want), "\r\n", "\n") != string(encoded) {
+		t.Errorf("Encode differs from the sample. Encoded:\n%s", encoded)
+	}
+}
+
 func TestExportWritesEveryEventAndReadsBack(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "My Exports.json")

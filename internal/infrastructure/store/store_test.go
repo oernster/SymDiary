@@ -10,6 +10,7 @@ import (
 
 	"github.com/oernster/symdiary/internal/application"
 	"github.com/oernster/symdiary/internal/domain"
+	"github.com/oernster/symdiary/internal/infrastructure/storetest"
 )
 
 // open answers a store over a fresh file in a folder whose name has a space in
@@ -54,124 +55,14 @@ func TestMissingFileGivesEmptyRecord(t *testing.T) {
 	}
 }
 
-func TestNoteAndSymptomRoundTripByteForByte(t *testing.T) {
+// TestTheStoreContract holds the SQLite record to the rules every store keeps;
+// the tests below it cover what only this store does.
+func TestTheStoreContract(t *testing.T) {
 	t.Parallel()
-	store, _ := open(t)
-	note := "  Much worse than yesterday.  \n\tAnd a second line; ümlaut, emoji \U0001F635."
-	given := input(" Kopfschmerzen ", instant(12, 30))
-	given.Note, given.Severity = note, domain.SeverityModerate
-	saved, err := store.AddEvent(given)
-	if err != nil {
-		t.Fatalf("AddEvent: %v", err)
-	}
-	read, err := store.Event(saved.ID)
-	if err != nil {
-		t.Fatalf("Event: %v", err)
-	}
-	if read.Note != note || read.Symptom != " Kopfschmerzen " || read.Severity != domain.SeverityModerate {
-		t.Errorf("read back %+v", read)
-	}
-	if !read.OccurredAt.Equal(instant(12, 30)) || !read.RecordedAt.Equal(instant(12, 30)) {
-		t.Errorf("times read back as %v and %v", read.OccurredAt, read.RecordedAt)
-	}
-}
-
-func TestCaseVariantReusesTheHeldLabel(t *testing.T) {
-	t.Parallel()
-	store, _ := open(t)
-	first, _ := store.AddEvent(input("Tired", instant(9, 0)))
-	second, err := store.AddEvent(input("  TIRED", instant(17, 12)))
-	if err != nil {
-		t.Fatalf("AddEvent: %v", err)
-	}
-	if second.Definition != first.Definition || second.Symptom != "Tired" {
-		t.Errorf("the variant made %+v, want the held Tired", second)
-	}
-	definitions, _ := store.Definitions()
-	if len(definitions) != 1 || !definitions[0].LastUsed.Equal(instant(17, 12)) {
-		t.Errorf("definitions = %+v, want one, last used 17:12", definitions)
-	}
-}
-
-func TestUpdateCannotMoveRecordedAt(t *testing.T) {
-	t.Parallel()
-	store, _ := open(t)
-	saved, _ := store.AddEvent(input("Tired", instant(9, 30)))
-	change := input("Headache", instant(8, 0))
-	change.RecordedAt = instant(23, 59)
-	change.Note = "edited"
-	updated, err := store.UpdateEvent(saved.ID, change)
-	if err != nil {
-		t.Fatalf("UpdateEvent: %v", err)
-	}
-	if !updated.RecordedAt.Equal(instant(9, 30)) {
-		t.Errorf("recorded-at moved to %v", updated.RecordedAt)
-	}
-	if updated.Symptom != "Headache" || !updated.OccurredAt.Equal(instant(8, 0)) || updated.Note != "edited" {
-		t.Errorf("update did not take: %+v", updated)
-	}
-	if _, err := store.UpdateEvent(999, change); !errors.Is(err, domain.ErrNoSuchEvent) {
-		t.Errorf("updating a missing event = %v, want ErrNoSuchEvent", err)
-	}
-}
-
-func TestDeleteIsAllOrNothing(t *testing.T) {
-	t.Parallel()
-	store, _ := open(t)
-	one, _ := store.AddEvent(input("Tired", instant(9, 0)))
-	two, _ := store.AddEvent(input("Tired", instant(10, 0)))
-	err := store.DeleteEvents([]domain.EventID{one.ID, 999})
-	if !errors.Is(err, domain.ErrNoSuchEvent) {
-		t.Errorf("deleting with a missing id = %v, want ErrNoSuchEvent", err)
-	}
-	if events, _ := store.Events(); len(events) != 2 {
-		t.Fatalf("a refused deletion removed events: %d left", len(events))
-	}
-	if err := store.DeleteEvents([]domain.EventID{one.ID, two.ID}); err != nil {
-		t.Fatalf("DeleteEvents: %v", err)
-	}
-	if events, _ := store.Events(); len(events) != 0 {
-		t.Errorf("%d events left after deleting both", len(events))
-	}
-	if _, err := store.Event(one.ID); !errors.Is(err, domain.ErrNoSuchEvent) {
-		t.Errorf("a deleted event reads %v", err)
-	}
-}
-
-func TestRename(t *testing.T) {
-	t.Parallel()
-	store, _ := open(t)
-	tired, _ := store.AddEvent(input("Tired", instant(9, 0)))
-	_, _ = store.AddEvent(input("Headache", instant(10, 0)))
-	if err := store.RenameDefinition(tired.Definition, "Exhausted", domain.KeyOf("Exhausted")); err != nil {
-		t.Fatalf("RenameDefinition: %v", err)
-	}
-	if read, _ := store.Event(tired.ID); read.Symptom != "Exhausted" {
-		t.Errorf("the event reads %q after the rename", read.Symptom)
-	}
-	if err := store.RenameDefinition(tired.Definition, "HEADACHE", domain.KeyOf("HEADACHE")); err == nil {
-		t.Error("renaming onto a held key should be refused by the unique key")
-	}
-	if err := store.RenameDefinition(999, "Nausea", domain.KeyOf("Nausea")); !errors.Is(err, domain.ErrNoSuchDefinition) {
-		t.Errorf("renaming a missing definition = %v", err)
-	}
-}
-
-func TestImportIsOneTransaction(t *testing.T) {
-	t.Parallel()
-	store, _ := open(t)
-	definitions := []application.DefinitionInput{
-		{Label: "Nausea", Key: domain.KeyOf("Nausea"), LastUsed: instant(8, 0)},
-	}
-	events := []application.EventInput{input("Tired", instant(9, 0)), input("tired", instant(10, 0))}
-	if err := store.Import(definitions, events); err != nil {
-		t.Fatalf("Import: %v", err)
-	}
-	held, _ := store.Definitions()
-	if len(held) != 2 {
-		t.Errorf("definitions after import = %+v, want Nausea and Tired", held)
-	}
-
+	storetest.Run(t, func(t *testing.T) application.Store {
+		store, _ := open(t)
+		return store
+	})
 }
 
 // refuseNote plants a trigger that makes any insert of an event with the given

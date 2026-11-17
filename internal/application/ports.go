@@ -64,6 +64,38 @@ type Record struct {
 	Events      []domain.Event
 }
 
+// Sent remembers which events the phone recorder has handed to the desktop
+// (Amendment 21). The desktop hands nothing over, so it answers NothingSent.
+type Sent interface {
+	// SentIDs answers every event that has been in a completed send.
+	SentIDs() ([]domain.EventID, error)
+	// LastBatch answers the events the last completed send carried; none
+	// before the first send.
+	LastBatch() ([]domain.EventID, error)
+	// MarkSent records a completed send of these events, which become the last
+	// batch, in one write.
+	MarkSent(ids []domain.EventID) error
+}
+
+// NothingSent is the desktop's Sent: no event of its record is ever handed
+// over, so no rule that turns on sending applies to it.
+type NothingSent struct{}
+
+// SentIDs answers none.
+func (NothingSent) SentIDs() ([]domain.EventID, error) { return nil, nil }
+
+// LastBatch answers none.
+func (NothingSent) LastBatch() ([]domain.EventID, error) { return nil, nil }
+
+// MarkSent refuses: the desktop never sends.
+func (NothingSent) MarkSent([]domain.EventID) error { return ErrNothingToSend }
+
+// RecordEncoder turns a record into the bytes of an export file, for a window
+// that hands the file over rather than writing it to a path.
+type RecordEncoder interface {
+	Encode(record Record) ([]byte, error)
+}
+
 // RecordFile writes and reads an export file.
 type RecordFile interface {
 	// Write writes the record to path, leaving no partial file on failure.

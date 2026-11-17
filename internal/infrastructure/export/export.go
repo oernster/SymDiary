@@ -74,7 +74,18 @@ type File struct{}
 
 // Write writes the record to path through a temporary file in the same folder,
 // replaced in one rename, so a failure leaves no partial file (FR-052).
-func (File) Write(path string, record application.Record) error {
+func (f File) Write(path string, record application.Record) error {
+	encoded, err := f.Encode(record)
+	if err != nil {
+		return err
+	}
+	return writeAtomically(path, encoded)
+}
+
+// Encode answers the bytes of an export of the record: the file Write writes,
+// for a window that hands the file over rather than saving it to a path (the
+// phone recorder's share sheet, FR-089).
+func (File) Encode(record application.Record) ([]byte, error) {
 	shape := fileShape{Format: formatName, Version: formatVersion}
 	for _, definition := range record.Definitions {
 		shape.Definitions = append(shape.Definitions, definitionShape{
@@ -90,11 +101,7 @@ func (File) Write(path string, record application.Record) error {
 			Note:       event.Note,
 		})
 	}
-	encoded, err := json.MarshalIndent(shape, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeAtomically(path, encoded)
+	return json.MarshalIndent(shape, "", "  ")
 }
 
 // writeAtomically writes data to path by way of a temporary file.
