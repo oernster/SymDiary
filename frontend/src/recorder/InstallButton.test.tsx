@@ -34,13 +34,13 @@ describe('installing the recorder', () => {
     expect(screen.queryByRole('button', { name: 'Install SymDiary' })).toBeNull()
   })
 
-  it('says why when Chrome will not install', async () => {
+  it('says why when the browser will not install', async () => {
     const { offers, make } = offering(() => Promise.reject(new Error('the prompt was already used')))
     render(<InstallButton offers={offers} />)
     make()
     fireEvent.click(screen.getByRole('button', { name: 'Install SymDiary' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Chrome would not install SymDiary: the prompt was already used.',
+      'The browser would not install SymDiary: the prompt was already used.',
     )
   })
 })

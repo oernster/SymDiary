@@ -515,6 +515,19 @@ alone until it can be measured on an iPhone.
 - **Costs:** iPhone users have no recorder yet; installing takes a few steps in
   the browser rather than one tap in a store.
 
+### No browser is required; the page checks its own
+
+The recorder names no browser as a requirement. On opening it checks the phone's
+browser for each thing it needs. Where anything is missing it starts nothing
+and says what.
+
+- **Rather than:** requiring the one browser it was measured in, which would
+  turn away everyone who uses another.
+- **Gains:** people keep the browser they already use; a browser nobody here
+  has tried is told plainly whether it can run the recorder.
+- **Costs:** passing the check is not the same as having been seen working; only
+  Chrome has been used end to end.
+
 ### The desktop's own rules, run on the phone
 
 The recorder runs the same Go rules and use cases as the desktop, compiled to

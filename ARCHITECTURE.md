@@ -142,7 +142,9 @@ there unchanged. Go's clock in the browser is a fixed offset from start-up, so
 the page names its time zone before Go starts and the binary carries the zone
 tables.
 
-`frontend/src/recorder` is the phone's own page: the form shows at once while
+`frontend/src/recorder` is the phone's own page. It first checks the browser
+for everything it needs; where anything is missing it starts nothing and names
+it (FR-104); no browser is required by name. The form shows at once while
 Go loads behind it (FR-100); the copy just opened takes a Web Lock from any
 older copy, which pauses and reloads itself once it is back on screen
 (FR-103); Send hands the file to the share panel and

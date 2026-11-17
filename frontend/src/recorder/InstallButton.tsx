@@ -21,7 +21,7 @@ export function InstallButton({ offers }: Props) {
     try {
       await offer.prompt()
     } catch (reason) {
-      setFailed(`Chrome would not install SymDiary: ${said(reason)}.`)
+      setFailed(`The browser would not install SymDiary: ${said(reason)}.`)
     }
   }
 

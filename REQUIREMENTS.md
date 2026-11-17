@@ -139,9 +139,10 @@ Where each platform keeps the two files it owns:
 Inside the Flatpak both variables already point at the sandbox, so the same
 rules land under `~/.var/app/uk.codecrafter.SymDiary`.
 
-The phone recorder runs installed to the home screen in Chrome 157 or later on
-Android (NFR-PORT-001), keeping its events in the browser's storage for
-`symdiary.com`. Measured on a Samsung Galaxy Z Flip 5 (Appendix A).
+The phone recorder runs installed to the home screen on Android, in any
+browser that has what it needs (NFR-PORT-001, FR-104), keeping its events in
+that browser's storage for `symdiary.com`. Seen working end to end in Chrome
+157 on a Samsung Galaxy Z Flip 5 (Appendix A).
 
 ### 2.4 Constraints
 
@@ -897,8 +898,10 @@ measured; the shared button rules set no minimum size. To be verified by a
 structural test over the recorder's styles.
 
 **NFR-PORT-001 Platforms**: The recorder shall run installed to the home
-screen in Chrome 157 or later on Android (D-1, Q-14). Measured on Chrome 157
-on a Samsung Galaxy Z Flip 5.
+screen on Android in any browser offering WebAssembly, IndexedDB, service
+workers, Web Locks and file sharing (D-1, Q-14, FR-104). No browser is named
+as a requirement. Seen working end to end only in Chrome 157 on a Samsung
+Galaxy Z Flip 5.
 
 **NFR-MAINT-006 Coverage**: The recorder's rules and use cases shall be held at
 100% statement coverage by the same gate as NFR-MAINT-001.
@@ -946,7 +949,7 @@ Decisions taken by the owner on 2026-11-16:
 | D-9 | The recorder shares a `.txt` file holding export format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json` (Q-17, M-4). |
 | D-10 | The recorder runs SymDiary's own Go domain and application, compiled to WebAssembly; the rules have one home (Q-12, M-6). |
 
-Priorities: 25 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
+Priorities: 26 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
 
 #### Recording on the phone
 
@@ -1084,6 +1087,21 @@ Priorities: 25 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   cache" and "never reloads while the page stays hidden or on a fresh load";
   `frontend/src/recorder/TakenOver.test.tsx`, "reloads the page when Reload is
   tapped"; checked by hand on the phone with a Chrome tab and the icon
+
+**FR-104 The recorder checks its browser**
+- Priority: Must
+- Requirement: When the recorder opens in a browser lacking WebAssembly,
+  IndexedDB, service workers, Web Locks or the ability to share a `.txt` file,
+  it shall start nothing and shall say that this browser cannot run it, naming
+  each thing missing and what it is for.
+- Rationale: no browser is required by name (Oliver's ruling), so the check
+  happens on the phone itself. Recording events a browser could not keep or
+  send would lose them.
+- Verified by: `frontend/src/recorder/capabilities.test.ts`, "finds nothing
+  missing in a browser that has everything", "names only %s when it is missing"
+  for each need, "counts sharing as missing when the browser says it
+  cannot share a file" and "says the browser cannot run the recorder and names
+  everything it lacks"
 
 #### Correcting on the phone
 
@@ -1364,7 +1382,7 @@ Decided by the owner on 2026-11-16 (Amendment 21):
 | Q-11 | What does a send carry? | **Decided 2026-11-16 (D-6):** only the events not yet sent, plus `Send again` for the last batch. Reason, read from the source the same day: the desktop matches events by all five fields (`internal/domain/event.go:47`), so with D-2 a whole-record send after a desktop correction adds the phone's original copy back as a second event, while a deletion on the desktop is undone. The residual risk sits on `Send again` alone, which warns first (FR-096). Lives in FR-089, FR-095 to FR-097. | Oliver |
 | Q-12 | One home for the recording rules: the Go domain compiled to WebAssembly versus a TypeScript copy held equal by shared case tables? | **Decided 2026-11-16 (D-10): the Go domain and application compiled to WebAssembly.** The house rule settles it: a second copy of the rules is a defect, not a trade-off. M-6 shows it works on the phone. Its 496 ms start becomes a constraint on the design: the form appears at once and Go loads behind it (FR-100). | Oliver |
 | Q-13 | Where is the recorder served from? | **Reopened 2026-11-16.** Answered "under symdiary.com", then a measurement contradicted it: every page of the site (`docs/index.html`, `features.html`, `why.html`, `download.html`) loads GoatCounter's `count.js` from `gc.zgo.at`. Browser storage belongs to an origin rather than a path (general platform knowledge, not measured here), so a recorder at `symdiary.com/recorder/` shares its events with pages running a third-party script, which NFR-PRIV-005 forbids. **Decided 2026-11-17: `symdiary.com/app/`, with GoatCounter removed from the site** (Oliver's ruling: the recorder holds personal data). One repository on GitHub Pages alone rules out a subdomain: GitHub's documentation gives a Pages site one custom domain and lists an apex domain paired with a custom subdomain as unsupported. | Oliver |
-| Q-14 | Minimum phone versions? | **Decided 2026-11-16: Chrome 157 on Android**, the version every probe was measured on. An older Chrome is not claimed. | Oliver |
+| Q-14 | Minimum phone versions? | **Decided 2026-11-17: no browser floor.** Any Android browser passing the recorder's own check (FR-104) is supported; the site names no browser as a requirement. Chrome 157 is the one seen working end to end. Supersedes the 2026-11-16 answer of Chrome 157. | Oliver |
 | Q-15 | Does a phone recorder change 4.1's MHRA reading? | **Decided 2026-11-16:** no. The intended purpose is unchanged (a written symptom diary's replacement, MHRA v1.10f page 21). The standing rules carry over: no store listing, no health category, nothing that enhances the data presented. | Oliver |
 | Q-17 | Chrome on Android shares `.txt` but not `.json` (M-4). How does the file reach the desktop? | **Decided 2026-11-16 (D-9): share as `.txt`.** Lives in FR-094, FR-098, FR-099. As proposed: the recorder shares `SymDiary-phone-<date>-<time>.txt` holding format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json`. The reader already decides by contents (the `format` and `version` envelope), so a `.txt` that is not a SymDiary record is refused as any foreign file is. Cost: a desktop change, plus a name that no longer says what the file holds, which the desktop has avoided before (`app.go:25`). Alternative: keep `.json` through `Download the file instead` only, leaving the user to move it from the phone's Downloads folder by hand. | Oliver |
 | Q-16 | Same repository or a new one? | **Decided 2026-11-16:** the same. FR-093 and NFR-MAINT-007 tie the two sides together, so one gate sees both. | Oliver |
@@ -1395,6 +1413,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 23 | 2026-11-17 | 2.3, NFR-PORT-001, Q-14, new FR-104 | The recorder no longer requires Chrome. It checks on opening for each thing it needs; where the browser lacks any, it starts nothing and names what is missing. | Owner's ruling: a product cannot force a browser on people. Only Chrome 157 was ever measured, which made it the stated requirement; the check moves that judgement onto each phone, so a browser nobody here has tried is told plainly whether it can run the recorder. |
 | 22 | 2026-11-17 | FR-103 | A copy of the recorder that a newer one paused reloads itself when the user comes back to it, taking the recorder back; while paused it offers a Reload button. | Owner's report from the phone: reopening the app showed the paused copy's message again. Only pulling the page down to reload brought the recorder back; nothing told the user so. Measured by the owner: a reload restores it. The page now does that reload itself the moment it is back on screen. |
 | 21 | 2026-11-16 | 1.3, 1.4, 2.1, 2.3, C-9, A-5, new 3.10 (FR-076 to FR-103), new NFR-PRIV-004 to 006, NFR-REL-002, NFR-USE-005 to 007, NFR-PORT-001, NFR-MAINT-006 and 007, 3.9, Appendices A to C | A phone recorder for Android joins the product. It records offline, keeps every event, edits only what it has not sent and hands unsent events to the desktop as a `.txt` file holding export format version 1 through the share sheet; the desktop's Import lists `.txt` beside `.json`. It runs the desktop's own Go rules compiled to WebAssembly, served from `symdiary.com/app/`; the site stops loading GoatCounter. The 3.9 row "Phone or web version" goes; iPhone joins 3.9. Synchronisation between machines stays out of scope. | Owner's request: symptoms are noticed away from the desk, so the recorder belongs where they are noticed. Every behaviour the phone's browser owns was measured on the owner's Galaxy Z Flip 5 in Chrome 157 before it was written (M-2 to M-6). Two of those measurements changed the design: Chrome refuses to share `.json` whatever it is declared as, so the file is `.txt` (D-9); the desktop matches events on all five fields, so a send carries only unsent events or a correction made on the desktop would come back (D-6). A Wi-Fi link was rejected because it would break NFR-PRIV-001 and needs a certificate the phone trusts. The counter goes because any script on a page of symdiary.com can read the recorder's storage, which holds personal data. A subdomain would have kept them apart; GitHub Pages gives one repository one custom domain. |
 | 20 | 2026-10-03 | FR-040, FR-041, FR-053 | Five corrections from an audit of the shipped 1.2.0. (1) An event too tall for any page continues onto the next, which opens with the event's time again; an event that fits is still never split. (2) A note's line breaks reach the sheet. (3) A word wider than the line is broken at the line. (4) Save PDF refuses, naming them, characters the carried typeface cannot print, before asking where to save. (5) An import refuses a symptom kept with no events whose name is blank, as it already refused a blank event. Separately, an import made while the record or the history is showing now refreshes it. | Each was measured before it was changed. A single note of 5,059 characters ran off the foot of its page while the document reported success; a note's line breaks printed as one line; a 220 character address ran 375mm wide on a 210mm sheet; the typeface has no glyph for Chinese, Japanese, Korean, Arabic, Hebrew, Devanagari or emoji, which printed as empty boxes; a blank symptom name was imported as a blank entry. The refresh closes the path Amendment 19 left: an import from the band under a record on screen. Owner's rulings the same day: continue rather than shrink, refuse rather than carry a font for every script, break rather than leave whole; an import keeps future times as the file states them (DECISIONS-TRADEOFFS.md). Verified by `internal/infrastructure/pdf/layout_test.go::TestAnEventTallerThanAPageContinuesWithItsTimeRepeated`, `TestANoteKeepsItsLineBreaks`, `TestAWordWiderThanTheLineIsBrokenAtTheLine`; `sheet_test.go::TestCharactersTheTypefaceCannotPrintAreRefusedByName`, `TestTheTypefacePrintsTheEuropeanScripts`; `pdf_test.go::TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave`; `export_test.go::TestReadRefusals` ("blank definition"); `frontend/src/App.test.tsx`, "shows an imported event in the record already on screen" and "... in the history already on screen". |

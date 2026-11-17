@@ -8,9 +8,7 @@
 import { useState } from 'react'
 import { api, type Parcel, type Refused, type Waiting } from '../api'
 import { ConfirmDialog } from '../Dialog'
-
-/** The share sheet takes plain text; the contents are an export all the same. */
-const shareType = 'text/plain'
+import { shareType } from './capabilities'
 
 /** What a share sheet dismissed without choosing an app rejects with. */
 const cancelled = 'AbortError'

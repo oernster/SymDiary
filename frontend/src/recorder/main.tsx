@@ -5,6 +5,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { said } from '../api'
 import { RecorderApp } from './RecorderApp'
+import { cannotRun, missing, type Browser } from './capabilities'
 import { listenForInstall, reloadOnReturn, startGo, takeOver, type RecorderWindow } from './start'
 import { TakenOver } from './TakenOver'
 import '../theme.css'
@@ -45,6 +46,12 @@ function pause(view: ReactDOM.Root) {
 
 async function open(root: HTMLElement) {
   const view = ReactDOM.createRoot(root)
+  // Before anything starts, so nothing is recorded that this browser could not keep or send (FR-104).
+  const lacking = missing(window as unknown as Browser)
+  if (lacking.length > 0) {
+    stopped(view, cannotRun(lacking))
+    return
+  }
   try {
     // The copy just opened always shows the recorder; an older one pauses (FR-103).
     await takeOver(navigator.locks, () => pause(view))

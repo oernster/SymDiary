@@ -60,8 +60,8 @@ these:
   exception: it hands an address to the desktop and your browser does the
   asking. On Linux the Flatpak is granted no network permission at all, so there
   the claim is enforced by the sandbox rather than only by a test.
-- The phone recorder is a page Chrome loads from `symdiary.com/app` and then
-  keeps, so it opens and records with no connection. Its page carries the same
+- The phone recorder is a page your phone's browser loads from
+  `symdiary.com/app` and then keeps, so it opens and records with no connection. Its page carries the same
   `connect-src 'none'`, held by the same test. Its events reach the desktop
   only as a file you hand over yourself through the phone's share panel; there
   is no account, no server and no sync. The site it is served from loads no
@@ -123,10 +123,12 @@ Download the setup program on Windows, the DMG on macOS or the Flatpak bundle on
 Linux. Windows needs version 10 or 11, 64-bit; the DMG needs Apple Silicon (M1
 or later). To build any of them from source, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-On an Android phone, open `symdiary.com/app` in Chrome 157 or later and tap
-**Install SymDiary** at the top of the page; it then opens from its own icon on
-the home screen. It has been used on a Samsung Galaxy Z Flip 5. iPhone is not
-supported.
+On an Android phone, open `symdiary.com/app` in your browser and install it.
+Where the browser offers it, tap **Install SymDiary** at the top of the page;
+otherwise choose **Install** or **Add to home screen** from the browser's menu. It then
+opens from its own icon on the home screen. If your browser lacks something the
+recorder needs, the page says what and starts nothing. It has been used end to
+end in Chrome on a Samsung Galaxy Z Flip 5. iPhone is not supported.
 
 Your record and the run log go wherever the platform keeps such things:
 
