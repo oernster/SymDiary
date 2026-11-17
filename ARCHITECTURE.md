@@ -144,7 +144,8 @@ tables.
 
 `frontend/src/recorder` is the phone's own page: the form shows at once while
 Go loads behind it (FR-100); the copy just opened takes a Web Lock from any
-older copy, which stops (FR-103); Send hands the file to the share panel and
+older copy, which pauses and reloads itself once it is back on screen
+(FR-103); Send hands the file to the share panel and
 marks events sent only once the share completes. `build-recorder.ps1` builds it
 into `docs/app/`, which the website publishes as `symdiary.com/app/`.
 

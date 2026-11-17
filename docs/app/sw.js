@@ -4,7 +4,7 @@
 // recorder opens with the network off (FR-078). build-recorder.ps1 fills in the
 // tokens: the cache is named from VERSION, the list is every file it shipped.
 const CACHE = "symdiary-recorder-1.4.0";
-const FILES = ["./", "assets/application-icon-1EQn0oGa.png", "assets/recorder-BMIb2EeW.css", "assets/recorder-COJPPb0W.js", "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "symdiary-wasm.js", "wasm_exec.js"];
+const FILES = ["./", "assets/application-icon-1EQn0oGa.png", "assets/recorder-BMIb2EeW.css", "assets/recorder-tG82LoH8.js", "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "symdiary-wasm.js", "wasm_exec.js"];
 
 self.addEventListener("install", (event) => {
   // cache: "reload" skips the HTTP cache, so a new version never keeps old files.

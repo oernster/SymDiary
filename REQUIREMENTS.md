@@ -1068,16 +1068,22 @@ Priorities: 25 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Priority: Must
 - Requirement: When the recorder opens while another copy is open on the same
   phone, the copy just opened shall show the recorder and the older copy shall
-  stop and say so. Where a copy cannot tell whether another is open, it shall
-  start nothing and say so.
+  pause and say so. When the user comes back to a paused copy, it shall reload
+  itself and show the recorder, pausing the other in turn; while paused it
+  shall also offer a Reload button. Where a copy cannot tell whether another is
+  open, it shall start nothing and say so.
 - Rationale: two copies writing the phone's storage could write over each
-  other's events, so only one may write. The one the user just opened is the
+  other's events, so only one may write. The one the user is looking at is the
   one they mean to use (Oliver's ruling): a copy left open in a Chrome tab must
-  never block the home screen icon.
+  never block the home screen icon; reopening the app must never leave the
+  user on a stopped page with nothing to do.
 - Verified by: `frontend/src/recorder/start.test.ts`, "takes the lock from any
   copy already holding it", "stops this copy once a newer one takes the lock
-  away" and "refuses when the lock cannot be asked for"; checked by hand on the
-  phone with a Chrome tab and the icon
+  away", "refuses when the lock cannot be asked for", "reloads once the page is
+  brought back to the screen", "reloads when Chrome restores the page from its
+  cache" and "never reloads while the page stays hidden or on a fresh load";
+  `frontend/src/recorder/TakenOver.test.tsx`, "reloads the page when Reload is
+  tapped"; checked by hand on the phone with a Chrome tab and the icon
 
 #### Correcting on the phone
 
@@ -1389,6 +1395,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 22 | 2026-11-17 | FR-103 | A copy of the recorder that a newer one paused reloads itself when the user comes back to it, taking the recorder back; while paused it offers a Reload button. | Owner's report from the phone: reopening the app showed the paused copy's message again. Only pulling the page down to reload brought the recorder back; nothing told the user so. Measured by the owner: a reload restores it. The page now does that reload itself the moment it is back on screen. |
 | 21 | 2026-11-16 | 1.3, 1.4, 2.1, 2.3, C-9, A-5, new 3.10 (FR-076 to FR-103), new NFR-PRIV-004 to 006, NFR-REL-002, NFR-USE-005 to 007, NFR-PORT-001, NFR-MAINT-006 and 007, 3.9, Appendices A to C | A phone recorder for Android joins the product. It records offline, keeps every event, edits only what it has not sent and hands unsent events to the desktop as a `.txt` file holding export format version 1 through the share sheet; the desktop's Import lists `.txt` beside `.json`. It runs the desktop's own Go rules compiled to WebAssembly, served from `symdiary.com/app/`; the site stops loading GoatCounter. The 3.9 row "Phone or web version" goes; iPhone joins 3.9. Synchronisation between machines stays out of scope. | Owner's request: symptoms are noticed away from the desk, so the recorder belongs where they are noticed. Every behaviour the phone's browser owns was measured on the owner's Galaxy Z Flip 5 in Chrome 157 before it was written (M-2 to M-6). Two of those measurements changed the design: Chrome refuses to share `.json` whatever it is declared as, so the file is `.txt` (D-9); the desktop matches events on all five fields, so a send carries only unsent events or a correction made on the desktop would come back (D-6). A Wi-Fi link was rejected because it would break NFR-PRIV-001 and needs a certificate the phone trusts. The counter goes because any script on a page of symdiary.com can read the recorder's storage, which holds personal data. A subdomain would have kept them apart; GitHub Pages gives one repository one custom domain. |
 | 20 | 2026-10-03 | FR-040, FR-041, FR-053 | Five corrections from an audit of the shipped 1.2.0. (1) An event too tall for any page continues onto the next, which opens with the event's time again; an event that fits is still never split. (2) A note's line breaks reach the sheet. (3) A word wider than the line is broken at the line. (4) Save PDF refuses, naming them, characters the carried typeface cannot print, before asking where to save. (5) An import refuses a symptom kept with no events whose name is blank, as it already refused a blank event. Separately, an import made while the record or the history is showing now refreshes it. | Each was measured before it was changed. A single note of 5,059 characters ran off the foot of its page while the document reported success; a note's line breaks printed as one line; a 220 character address ran 375mm wide on a 210mm sheet; the typeface has no glyph for Chinese, Japanese, Korean, Arabic, Hebrew, Devanagari or emoji, which printed as empty boxes; a blank symptom name was imported as a blank entry. The refresh closes the path Amendment 19 left: an import from the band under a record on screen. Owner's rulings the same day: continue rather than shrink, refuse rather than carry a font for every script, break rather than leave whole; an import keeps future times as the file states them (DECISIONS-TRADEOFFS.md). Verified by `internal/infrastructure/pdf/layout_test.go::TestAnEventTallerThanAPageContinuesWithItsTimeRepeated`, `TestANoteKeepsItsLineBreaks`, `TestAWordWiderThanTheLineIsBrokenAtTheLine`; `sheet_test.go::TestCharactersTheTypefaceCannotPrintAreRefusedByName`, `TestTheTypefacePrintsTheEuropeanScripts`; `pdf_test.go::TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave`; `export_test.go::TestReadRefusals` ("blank definition"); `frontend/src/App.test.tsx`, "shows an imported event in the record already on screen" and "... in the history already on screen". |
 | 19 | 2026-10-03 | FR-040, FR-041, FR-042, FR-046 | The sheet names the last appointment, `Last appointment: 02 Sep 2026`, under the date range whenever the range covers it; a `Show on the sheet` box, ticked by default, lets the reader leave it off. Once the record is showing, changing the range refreshes it. | Owner's request, superseding Amendment 18's ruling that the sheet never mentions the appointment. The reader of the sheet benefits from knowing where the last consultation falls: what has already been heard and what is new is the first thing a doctor asks of the record; the comparison is the doctor's to make. The rule is the range rather than how it was chosen, so a custom range spanning the appointment names it too, while a range that does not cover it names nothing, where the line would be noise. The line sits beside the range and never among the events, so the software arranges nothing around it (4.1). The opt-out is for a reader who would rather the date not reach paper. The refresh answers a defect the owner found: the record on screen stayed on the old range while Save PDF wrote the new one, so the two could differ. |

@@ -4,10 +4,6 @@
 /** The Web Locks name every copy of the recorder asks for. */
 export const lockName = 'symdiary-recorder'
 
-/** Said by an older copy once a newer one has taken over, so only one copy writes the phone's events (FR-103). */
-export const takenOver =
-  'SymDiary has been opened again on this phone, so this copy has stopped. The newer one has your events. You can close this one.'
-
 /** The scripts build-recorder.ps1 places beside the page. */
 export const goSupport = 'wasm_exec.js'
 export const goRules = 'symdiary-wasm.js'
@@ -45,6 +41,29 @@ export function takeOver(locks: LockManager, lost: () => void): Promise<void> {
         else refuse(reason)
       })
   })
+}
+
+/**
+ * reloadOnReturn reloads a copy that a newer one stopped as soon as the person
+ * comes back to it, so the copy in front of them takes the recorder back
+ * (FR-103). Reopening the app can bring the stopped page back rather than start
+ * it afresh; a reload is what starts it again. It reloads only on the change to
+ * visible, never while the page stays hidden. It answers a function that stops
+ * listening.
+ */
+export function reloadOnReturn(doc: Document, win: Window, reload: () => void): () => void {
+  const seen = () => {
+    if (doc.visibilityState === 'visible') reload()
+  }
+  const restored = (event: PageTransitionEvent) => {
+    if (event.persisted) reload()
+  }
+  doc.addEventListener('visibilitychange', seen)
+  win.addEventListener('pageshow', restored)
+  return () => {
+    doc.removeEventListener('visibilitychange', seen)
+    win.removeEventListener('pageshow', restored)
+  }
 }
 
 /** loadScript adds one of the page's own scripts, settling once it has run. */

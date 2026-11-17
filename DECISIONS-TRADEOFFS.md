@@ -572,6 +572,20 @@ the desktop owns its corrections. The phone keeps every event it records.
 - **Costs:** a mistake noticed on the phone after sending is corrected on the
   desktop.
 
+### The copy in front is the one that writes
+
+Only one copy of the recorder writes the phone's events at a time. The one the
+person opens takes over; any other pauses and starts again by itself the
+moment the person comes back to it, taking over in turn.
+
+- **Rather than:** letting the first copy opened keep the record, which would
+  leave the home screen icon blocked by a forgotten browser tab; a paused page
+  that the person has to know to refresh.
+- **Gains:** two copies can never write over each other's events; whichever
+  copy the person is looking at is the one that works.
+- **Costs:** an entry half typed in a copy when it pauses is lost; the copy
+  reloads as it comes back rather than resuming where it was.
+
 ### The PDF stays on the desktop
 
 The phone records and sends. It does not draw the sheet for a doctor.

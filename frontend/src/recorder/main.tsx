@@ -5,7 +5,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { said } from '../api'
 import { RecorderApp } from './RecorderApp'
-import { listenForInstall, startGo, takeOver, takenOver, type RecorderWindow } from './start'
+import { listenForInstall, reloadOnReturn, startGo, takeOver, type RecorderWindow } from './start'
+import { TakenOver } from './TakenOver'
 import '../theme.css'
 import '../styles.css'
 import '../lists.css'
@@ -33,11 +34,20 @@ function stopped(view: ReactDOM.Root, text: string) {
   )
 }
 
+/** reload starts the page afresh, which takes the recorder back (FR-103). */
+const reload = () => window.location.reload()
+
+/** pause stops this copy and starts it again once the person comes back to it (FR-103). */
+function pause(view: ReactDOM.Root) {
+  view.render(<TakenOver reload={reload} />)
+  reloadOnReturn(document, window, reload)
+}
+
 async function open(root: HTMLElement) {
   const view = ReactDOM.createRoot(root)
   try {
-    // The copy just opened always shows the recorder; an older one stops (FR-103).
-    await takeOver(navigator.locks, () => stopped(view, takenOver))
+    // The copy just opened always shows the recorder; an older one pauses (FR-103).
+    await takeOver(navigator.locks, () => pause(view))
   } catch (reason) {
     // Two copies writing one store could lose events, so not knowing is a stop.
     stopped(view, `The recorder could not check whether it is already open: ${said(reason)}.`)

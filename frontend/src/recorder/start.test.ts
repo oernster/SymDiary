@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
-import { goRules, goSupport, listenForInstall, lockName, startGo, takeOver, type RecorderWindow } from './start'
+import {
+  goRules,
+  goSupport,
+  listenForInstall,
+  lockName,
+  reloadOnReturn,
+  startGo,
+  takeOver,
+  type RecorderWindow,
+} from './start'
 
 /** The smallest module WebAssembly will compile: the magic number and version 1. */
 const emptyModule = btoa(String.fromCharCode(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
@@ -48,6 +57,54 @@ describe('the newest copy takes over (FR-103)', () => {
   it('refuses when the lock cannot be asked for', async () => {
     const locks = { request: () => Promise.reject(new Error('locks unavailable')) } as unknown as LockManager
     await expect(takeOver(locks, vi.fn())).rejects.toThrow('locks unavailable')
+  })
+})
+
+describe('a stopped copy starts again when the person comes back (FR-103)', () => {
+  /** showing sets what the page reports about being on screen. */
+  function showing(state: DocumentVisibilityState) {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }
+
+  /** shown dispatches pageshow, as Chrome does on restoring a page or not. */
+  function shown(persisted: boolean) {
+    const event = new Event('pageshow') as PageTransitionEvent
+    Object.defineProperty(event, 'persisted', { value: persisted })
+    window.dispatchEvent(event)
+  }
+
+  it('reloads once the page is brought back to the screen', () => {
+    const reload = vi.fn()
+    const stop = reloadOnReturn(document, window, reload)
+    showing('visible')
+    expect(reload).toHaveBeenCalledTimes(1)
+    stop()
+  })
+
+  it('reloads when Chrome restores the page from its cache', () => {
+    const reload = vi.fn()
+    const stop = reloadOnReturn(document, window, reload)
+    shown(true)
+    expect(reload).toHaveBeenCalledTimes(1)
+    stop()
+  })
+
+  it('never reloads while the page stays hidden or on a fresh load', () => {
+    const reload = vi.fn()
+    const stop = reloadOnReturn(document, window, reload)
+    showing('hidden')
+    shown(false)
+    expect(reload).not.toHaveBeenCalled()
+    stop()
+  })
+
+  it('stops listening when told to', () => {
+    const reload = vi.fn()
+    reloadOnReturn(document, window, reload)()
+    showing('visible')
+    shown(true)
+    expect(reload).not.toHaveBeenCalled()
   })
 })
 
