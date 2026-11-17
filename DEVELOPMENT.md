@@ -96,7 +96,7 @@ In order, it:
 2. Runs `test.ps1` and stops on failure, unless `-Fast` was given.
 3. Builds `./cmd/recorder` for `js/wasm` with the same version flag.
 4. Builds the page with `npm --prefix frontend run build:recorder`.
-5. Collects `dist-recorder/`: the page as `index.html`, the rules as
+5. Collects `docs/app/`: the page as `index.html`, the rules as
    `symdiary-wasm.js` (base64, because the page's `connect-src 'none'` forbids
    fetching a `.wasm` file), Go's own `wasm_exec.js`, the icons and the
    manifest from `build/recorder/`, with the manifest's colour read from
@@ -104,12 +104,18 @@ In order, it:
 6. Writes `sw.js`, listing every file it shipped under a cache named from
    `VERSION`, so the recorder opens offline.
 
-`dist-recorder/` is the whole site. To try it, serve it on localhost, which the
-browser treats as secure enough for the service worker and the single copy
-lock:
+`docs/app/` is the whole recorder. It is committed with the website, so a push
+publishes it as `symdiary.com/app/`. No page of the site may load a script
+from another site: the recorder keeps a person's symptoms in the browser's
+storage for `symdiary.com`, which any script on any of its pages can read
+(NFR-PRIV-005, held by `tests/structural/site_test.go`).
+
+To try it, serve the site on localhost, which the browser treats as secure
+enough for the service worker and the single copy lock, then open
+`http://localhost:8768/app/`:
 
 ```powershell
-python -m http.server 8768 --directory dist-recorder
+python -m http.server 8768 --directory docs
 ```
 
 ## Running from source

@@ -1,13 +1,14 @@
-# Builds the phone recorder (Amendment 21): one folder holding everything
-# app.symdiary.com serves.
+# Builds the phone recorder (Amendment 21) into the site, where GitHub Pages
+# publishes it as symdiary.com/app/ (D-7).
 #
 #   ./build-recorder.ps1        the gate, then the recorder
 #   ./build-recorder.ps1 -Fast  no gate, for a working loop
 #
 # Output:
-#   dist-recorder/   the whole site: index.html, its bundle, SymDiary's Go rules
-#                    as symdiary-wasm.js, Go's wasm_exec.js, the manifest, the
-#                    icons and sw.js, which keeps all of them for offline use
+#   docs/app/   the whole recorder: index.html, its bundle, SymDiary's Go rules
+#               as symdiary-wasm.js, Go's wasm_exec.js, the manifest, the icons
+#               and sw.js, which keeps all of them for offline use. It is
+#               committed with the site; a push publishes it.
 #
 # The gate runs first, as build.ps1's does; -Fast is for a working loop and
 # says so in its output.
@@ -35,7 +36,7 @@ if ($Fast) {
 }
 
 $templates = Join-Path $root 'build\recorder'
-$site = Join-Path $root 'dist-recorder'
+$site = Join-Path $root 'docs\app'
 $utf8 = New-Object System.Text.UTF8Encoding $false
 
 function Write-Text([string]$path, [string]$text) {

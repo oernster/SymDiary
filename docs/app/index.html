@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      NFR-PRIV-001: the page may load only what ships with the recorder and may
+      open no connection of its own. 'wasm-unsafe-eval' lets it compile
+      SymDiary's Go rules (D-10); connect-src 'none' is why those rules arrive
+      as a script rather than a fetched .wasm file.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SymDiary</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script type="module" crossorigin src="./assets/recorder-DmnETX5n.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/recorder-DwoSk_r0.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
