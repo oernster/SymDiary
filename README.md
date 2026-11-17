@@ -11,9 +11,10 @@ A health tracker.  It doesn't diagnose.  It's just a little record of symptoms.
 When you notice a symptom, record it. When you see your doctor, take the record
 with you.
 
-SymDiary is a local-first symptom recorder for Windows, macOS and Linux. It keeps what you
-observed and when you observed it, then saves a short factual record as a PDF
-you can take to an appointment. It is a recorder, not a diagnostician.
+SymDiary is a local-first symptom recorder for Windows, macOS and Linux, with a
+recorder for Android phones beside it. It keeps what you observed and when you
+observed it, then saves a short factual record as a PDF you can take to an
+appointment. It is a recorder, not a diagnostician.
 
 Instead of telling a doctor "I have been tired a lot recently", you can show
 them:
@@ -36,7 +37,7 @@ Tired - 9 recorded events
 
 ## Who it is for
 
-For anyone who wants an accurate record of their own symptoms to discuss with a healthcare professional; someone who would rather keep that record on their own computer.
+For anyone who wants an accurate record of their own symptoms to discuss with a healthcare professional; someone who would rather keep that record on their own computer and phone.
 
 Not for anyone wanting advice about what their symptoms mean, a wellness score,
 a medication tracker or anything to sync between devices. SymDiary does none of
@@ -59,13 +60,21 @@ these:
   exception: it hands an address to the desktop and your browser does the
   asking. On Linux the Flatpak is granted no network permission at all, so there
   the claim is enforced by the sandbox rather than only by a test.
+- The phone recorder is a page Chrome loads from `symdiary.com/app` and then
+  keeps, so it opens and records with no connection. Its page carries the same
+  `connect-src 'none'`, held by the same test. Its events reach the desktop
+  only as a file you hand over yourself through the phone's share panel; there
+  is no account, no server and no sync. The site it is served from loads no
+  script from anywhere else, which a test also holds, because any script on it
+  could read the phone's stored events.
 - One connection can happen on Windows, before the window opens. SymDiary draws
   its window with Microsoft's WebView2, which Windows 11 always carries and
   Windows 10 may not. Where it is missing or too old, the window toolkit (Wails)
   asks first; if you agree, it downloads Microsoft's installer and runs it.
   Nothing from your record is involved. Decline and SymDiary does not open.
 - It does not encrypt your record. The file is protected by your user account,
-  as your documents are.
+  as your documents are. On the phone, events are not encrypted either; they are
+  protected by the phone's own lock.
 
 ## What it does
 
@@ -88,6 +97,11 @@ these:
   under the dates; untick a box to leave it off. The date stays in the window
   rather than in your record or its export.
 - Exports the whole record to a JSON file you own; reads one back too.
+- Records on an Android phone, with no signal if need be, using the desktop's
+  own rules. Events can be corrected or deleted on the phone until they are
+  sent. Send hands the unsent ones to the desktop as a file through the phone's
+  share panel; Import on the desktop reads it, skipping anything it already
+  holds.
 - Opens dark, with a button in the bar that moves it to light and remembers
   which you chose.
 
@@ -100,6 +114,7 @@ these:
 | Page | React 18 and TypeScript, built by Vite |
 | Record | SQLite through `modernc.org/sqlite` (pure Go), WAL, synchronous FULL |
 | Document | `github.com/go-pdf/fpdf` (pure Go), set in the Go fonts, carried in the binary |
+| Phone | The same Go rules compiled to WebAssembly, behind the same React form, installed from `symdiary.com/app`; events kept in the browser's IndexedDB |
 | Layering | `internal/{domain,application,infrastructure}`, with the UI in the root package and `frontend/`; enforced by tests |
 
 ## Running it
@@ -107,6 +122,11 @@ these:
 Download the setup program on Windows, the DMG on macOS or the Flatpak bundle on
 Linux. Windows needs version 10 or 11, 64-bit; the DMG needs Apple Silicon (M1
 or later). To build any of them from source, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
+On an Android phone, open `symdiary.com/app` in Chrome 157 or later and tap
+**Install SymDiary** at the top of the page; it then opens from its own icon on
+the home screen. It has been used on a Samsung Galaxy Z Flip 5. iPhone is not
+supported.
 
 Your record and the run log go wherever the platform keeps such things:
 

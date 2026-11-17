@@ -20,7 +20,7 @@ There is no open technical debt.
 
 ## Not debt (do not "fix" these)
 
-**`Unavailable` repeating the same refusal across every `Store` method.** It looks like eight copies of one line. Each one is a different method of the interface answering with the reason the record could not be opened, which is what keeps the window open and every action honest about why it cannot act (FR-062). Collapsing it would mean a smaller interface, not less code.
+**`Unavailable` repeating the same refusal across every `Store` method.** It looks like eleven copies of one line. Each one is a different method of the interface answering with the reason the record could not be opened, which is what keeps the window open and every action honest about why it cannot act (FR-062). Collapsing it would mean a smaller interface, not less code.
 
 **`setup.Real` being a wrapper with one call per method.** It looks like a layer that does nothing. It is what lets the install and removal sequences be stated over an interface and tested against a recorder, while production still reaches the real registry, the real filesystem and the real process list. There is nothing in it for a test to hold, which is the point: the seam costs one line per operation and buys the order of operations being checkable at all.
 

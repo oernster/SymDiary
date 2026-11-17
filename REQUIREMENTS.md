@@ -102,8 +102,9 @@ toolkit's, on a Windows machine missing WebView2 (Amendment 17, NFR-PRIV-001).
 
 The phone recorder (Amendment 21) is a second client of the same domain and
 application, compiled to WebAssembly and served as static files from
-`symdiary.com/app/`. It has no server either and opens no connection of its own
-(NFR-PRIV-004); it reaches the desktop only as a file the user moves.
+`symdiary.com/app/`. It has no server either; its only connections fetch its own
+files from that site (NFR-PRIV-004). It reaches the desktop only as a file the
+user moves.
 
 ### 2.2 User classes
 
@@ -219,7 +220,7 @@ that does not resolve is a requirement nobody can check.
   with no trimming, spelling correction or other change.
 - Acceptance: A note of `  Much worse than yesterday.  ` (leading and trailing
   spaces) reads back identical, byte for byte.
-- Verified by: `internal/infrastructure/store/store_test.go::TestNoteAndSymptomRoundTripByteForByte`
+- Verified by: `internal/infrastructure/store/store_test.go::TestTheStoreContract`, subtest "a note and symptom round trip byte for byte"
 
 **FR-006 Occurrence time never in the future**
 - Priority: Must
@@ -278,7 +279,7 @@ that does not resolve is a requirement nobody can check.
 - Priority: Must
 - Requirement: The application shall display every symptom exactly as the
   user typed it; no code path shall change its case, spelling or wording.
-- Verified by: `store_test.go::TestNoteAndSymptomRoundTripByteForByte`
+- Verified by: `store_test.go::TestTheStoreContract`, subtest "a note and symptom round trip byte for byte"
 
 **FR-014 Near duplicates**
 - Priority: Must
@@ -559,8 +560,8 @@ that does not resolve is a requirement nobody can check.
 - Requirement: The application shall keep the record in one SQLite file, in the
   folder the platform keeps a program's own configuration in: on Windows
   `%APPDATA%\SymDiary\symdiary.db` (Amendment 7 names the other two in 2.3).
-- Verified by: `internal/infrastructure/store/unavailable_test.go::TestOpensAtTheGivenPath`, which reads
-  the folder from the platform through `os.UserConfigDir`
+- Verified by: `internal/infrastructure/store/unavailable_test.go::TestTheRecordSitsInTheFolderThePlatformNames`,
+  which reads the folder from the platform through `os.UserConfigDir`
 
 **FR-061 First run**
 - Priority: Must
@@ -618,7 +619,7 @@ that does not resolve is a requirement nobody can check.
   run in. A notice that follows the clock claims a date nothing was published
   on.
 - Verified by: `internal/application/about_test.go`;
-  `frontend/src/App.test.tsx::opens the Guide and About`
+  `frontend/src/App.test.tsx::opens the Guide and About, then closes them again`
 
 **FR-068 Guide** (Amendment 5)
 - Priority: Must
@@ -626,7 +627,7 @@ that does not resolve is a requirement nobody can check.
   the picture that control draws, stating how to record quickly, what SymDiary
   will not do and how the record is kept.
 - Rationale: The house guide, as PigeonPost and ClearBudget carry one.
-- Verified by: `frontend/src/App.test.tsx::opens the Guide and About`
+- Verified by: `frontend/src/App.test.tsx::opens the Guide and About, then closes them again`
 
 **FR-069 Donation** (Amendment 6)
 - Priority: Should
@@ -641,7 +642,7 @@ that does not resolve is a requirement nobody can check.
   address is `https://www.paypal.com/ncp/payment/4XP3AYNMPQGUC`; no connection
   is opened by SymDiary itself.
 - Verified by: `donate_test.go`;
-  `frontend/src/App.test.tsx::offers the donation page last in the band`;
+  `frontend/src/App.test.tsx::offers the donation page last in the band, saying that the browser opens`;
   `tests/structural/boundary_test.go::TestNoNetworkImports`
 
 **FR-073 Light and dark** (Amendment 12)
@@ -809,13 +810,14 @@ a record reaches. Not instrumented, for the same reason as NFR-PERF-002: the
 earlier form named 2 s for over 1,000 events and nothing ever timed it. What has
 been read instead is the document itself, on each platform: see TESTING.md,
 where documents of one to three pages were written and looked right; the suite
-measures a seven page record's geometry rather than its speed.
+checks that a 120 event record runs to the pages its layout predicts
+(`sheet_test.go::TestALongRecordRunsToSeveralPages`) rather than timing it.
 
 **NFR-PRIV-001 No network**: The application and the setup program shall open
 no network connection of their own. Verified by `tests/structural/boundary_test.go::TestNoNetworkImports`
 (forbids `net` and every `net/` package in the repository's own Go code) plus a
 Content-Security-Policy carrying `default-src 'self'` and `connect-src 'none'`
-on the frontend, checked by a test reading `index.html`. The one exception is
+on the frontend, checked by `TestThePageOpensNoConnection` reading `index.html`. The one exception is
 Wails' own: on Windows, where WebView2 is missing or older than 94.0.992.31, the
 toolkit asks first; if the user agrees, it downloads Microsoft's bootstrapper
 before the window opens (Amendment 17). Nothing from the record is involved; the
@@ -859,9 +861,11 @@ have loaded, the recorder shall open no connection. The page carries a
 Content-Security-Policy of `default-src 'self'`, `script-src 'self'
 'wasm-unsafe-eval'` and `connect-src 'none'`; the second is what lets the Go
 code compile (M-6) and grants no network access. The
-one fetch is the browser's own: checking the recorder's host for newer copies
-of its files. Nothing from the record is involved. Verified by a test reading
-the recorder's `index.html`, plus a network log taken on each platform.
+only fetches are the recorder's service worker collecting the recorder's own
+files from its site, when a version installs and for any file missing from its
+cache. Nothing from the record is involved. Verified by
+`tests/structural/boundary_test.go::TestThePageOpensNoConnection`, which reads
+`frontend/recorder.html` for `default-src 'self'` and `connect-src 'none'`.
 
 **NFR-PRIV-005 The host**: The recorder shall be served as static files from an
 origin that sets no cookie and on which no page loads a script from another
@@ -887,7 +891,9 @@ the path rather than a count of taps.
 from the same colour tokens.
 
 **NFR-USE-007 Touch targets**: Every control on the recorder shall present a
-target of at least 44 by 44 CSS pixels (WCAG 2.2, 2.5.5). Verified by a
+target of at least 44 by 44 CSS pixels (WCAG 2.2, 2.5.5). **Not yet met or
+verified:** no test checks it and the recorder's buttons have not been
+measured; the shared button rules set no minimum size. To be verified by a
 structural test over the recorder's styles.
 
 **NFR-PORT-001 Platforms**: The recorder shall run installed to the home
@@ -898,8 +904,9 @@ on a Samsung Galaxy Z Flip 5.
 100% statement coverage by the same gate as NFR-MAINT-001.
 
 **NFR-MAINT-007 The file on both sides**: The recorder's file shall be held to
-FR-051 by the desktop reading it (FR-093) and by the recorder reading the
-desktop's committed sample.
+FR-051. The recorder writes it through the desktop's own export code
+(`export.File.Encode`), so the two sides share one implementation; the
+desktop reads it back (FR-093).
 
 ### 3.9 Won't this time
 
@@ -922,7 +929,7 @@ desktop's committed sample.
 
 ### 3.10 Functional requirements: phone recorder (Amendment 21)
 
-A recorder for Android, served from `symdiary.com/app/`, that records symptoms offline and hands them to the desktop as an export file. Every behaviour below that the phone's browser owns was measured on a real phone before it was written (Appendix A, M-2 to M-6). Each `Verified by` name in this section is a test still to be written; the rule in section 3 (each name read off the tree) applies once it exists.
+A recorder for Android, served from `symdiary.com/app/`, that records symptoms offline and hands them to the desktop as an export file. Every behaviour below that the phone's browser owns was measured on a real phone before it was written (Appendix A, M-2 to M-6). Each `Verified by` names tests that exist; where none does yet, the line says so.
 
 Decisions taken by the owner on 2026-11-16:
 
@@ -939,7 +946,7 @@ Decisions taken by the owner on 2026-11-16:
 | D-9 | The recorder shares a `.txt` file holding export format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json` (Q-17, M-4). |
 | D-10 | The recorder runs SymDiary's own Go domain and application, compiled to WebAssembly; the rules have one home (Q-12, M-6). |
 
-Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
+Priorities: 25 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
 
 #### Recording on the phone
 
@@ -950,8 +957,9 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   instant, unless the user has set another time.
 - Acceptance: Given the phone's clock reads 2026-11-16T08:05:00+00:00, symptom
   `Tired` and no note, when `Record` is pressed, then the recorder's list shows
-  16 Nov 08:05, `Tired`, with no note and no severity.
-- Verified by: recorder test `record.test` "records now from the clock"
+  16 Nov 2026 08:05, `Tired`, with no note and no severity.
+- Verified by: `internal/application/record_test.go::TestRecordNowUsesTheClock`,
+  the rule the phone runs; recording on the phone was checked by hand
 
 **FR-077 The desktop's recording rules hold on the phone**
 - Priority: Must
@@ -959,8 +967,8 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   FR-002 (blank symptom) and FR-006 (future occurrence), with the same wording.
 - Rationale: one product, one set of rules; a refusal on one side that is
   accepted on the other teaches the user that the rule is negotiable.
-- Verified by: one case table run against both implementations (Q-12 decides
-  whether there are two).
+- Verified by: `internal/facade/facade_test.go::TestRecordRefusals`, run over
+  the phone's own store; there is one implementation of the rules (D-10)
 
 **FR-078 Recording offline**
 - Priority: Must
@@ -973,20 +981,22 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Requirement: The recorder shall keep its events in the browser's storage for
   its own address, so they remain after the recorder is closed and after the
   phone restarts.
-- Verified by: probe M-3; recorder test "events survive a reload"
+- Verified by: probe M-3;
+  `internal/infrastructure/memstore/memstore_test.go::TestTheRecordSurvivesReopening`
 
 **FR-080 Persistent storage asked for**
 - Priority: Must
 - Requirement: When the recorder first opens, the recorder shall ask the
   browser to keep its storage persistent.
-- Verified by: recorder test "asks for persistent storage on first open"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "asks for persistent storage when it opens (FR-080)"
 
 **FR-081 Persistent storage refused**
 - Priority: Must
 - Requirement: If the browser declines persistent storage, then the recorder
   shall say on its main screen that the phone may clear unsent events and that
   sending is how to keep them.
-- Verified by: recorder test "says so when storage is not persistent"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "says the events may be cleared when the browser will
+  not keep them (FR-081)"
 
 **FR-082 Unsent count**
 - Priority: Must
@@ -996,14 +1006,17 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   master record, so the loss is bounded by what has not been sent; the user
   needs to see that bound.
 - Acceptance: Given three unsent events, the oldest recorded 12 Nov, the main
-  screen reads `3 not yet sent, oldest 12 Nov`.
-- Verified by: recorder test "names the unsent count and the oldest"
+  screen reads `3 not yet sent, oldest 12 Nov 2026` followed by that event's
+  time.
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "names the unsent count and the oldest (FR-082)";
+  `internal/application/outbox_test.go::TestWaitingCountsTheUnsentAndNamesTheOldest`
 
 **FR-083 Symptom suggestions on the phone**
 - Priority: Must
 - Requirement: The recorder shall offer the symptoms it has already recorded,
   matched as FR-011 matches them and folded as FR-014 folds them.
-- Verified by: the FR-011 and FR-014 case tables run against the recorder.
+- Verified by: the FR-011 and FR-014 tests (`TestSuggestionsMatchIgnoringCase`,
+  `TestCaseVariantReusesDefinition`), since the phone runs the same rules
 
 **FR-084 Symptoms seeded from the desktop**
 - Priority: Could
@@ -1011,14 +1024,16 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   recorder shall add the file's symptom definitions to its suggestions.
 - Rationale: the same words on both sides keep the desktop's list from
   growing near-duplicates.
-- Verified by: recorder test "an opened export adds its definitions"
+- **Not built in this release.** To be verified by a recorder test "an opened
+  export adds its definitions"
 
 **FR-085 Seeding takes no events**
 - Priority: Could
 - Requirement: When the recorder reads a desktop export file, the recorder
   shall store none of the file's events.
 - Rationale: D-3, one direction only.
-- Verified by: recorder test "an opened export adds no events"
+- **Not built in this release.** To be verified by a recorder test "an opened
+  export adds no events"
 
 **FR-100 The form before the rules**
 - Priority: Must
@@ -1026,7 +1041,9 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   the recording form, accept typing into it and show `Record` as disabled.
 - Rationale: D-10. The rules took 496 ms to start on the measured phone (M-6);
   typing a symptom takes longer than that, so nobody waits if the form does not.
-- Verified by: recorder test "the form takes input before the rules load"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "takes typing but cannot record until Go has loaded
+  (FR-100)"; `frontend/src/recorder/start.test.ts` "loads both scripts, names the zone and settles once Go is
+  ready (FR-100)"
 
 **FR-101 A failed write on the phone**
 - Priority: Must
@@ -1034,7 +1051,9 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   shall keep everything entered in the form and shall say that the event was
   not saved, naming the reason.
 - Rationale: FR-009's rule, on the phone.
-- Verified by: recorder test "a refused write loses nothing typed"
+- Verified by: `memstore_test.go::TestAFailedSaveChangesNothing`;
+  `frontend/src/RecordPane.test.tsx` "keeps everything entered when the event
+  was not saved", the form the phone shares
 
 **FR-102 Stored data from a newer recorder**
 - Priority: Must
@@ -1042,7 +1061,8 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   than the one running, then the recorder shall refuse to open it and shall
   say so, rather than read it.
 - Rationale: 4.4's rule for the desktop's own schema, on the phone.
-- Verified by: recorder test "a newer stored schema is refused"
+- Verified by: `memstore_test.go::TestASnapshotThatCannotBeTrustedIsRefused`,
+  its case for a newer schema
 
 **FR-103 One copy at a time**
 - Priority: Must
@@ -1065,20 +1085,23 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Priority: Must
 - Requirement: While an event has not been sent, the recorder shall let the
   user change its symptom, occurrence time, severity and note.
-- Verified by: recorder test "edits an unsent event"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "edits an unsent event (FR-086)"
 
 **FR-087 Delete before sending**
 - Priority: Must
 - Requirement: While an event has not been sent, when the user asks to delete
   it, the recorder shall ask first, naming the event, then delete it only on
   confirmation.
-- Verified by: recorder test "asks before deleting an unsent event"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "asks before deleting an unsent event, naming it
+  (FR-087)"
 
 **FR-088 Sent events are final on the phone**
 - Priority: Must
 - Requirement: If the user tries to edit or delete a sent event, then the
   recorder shall refuse, saying that a sent event is corrected on the desktop.
-- Verified by: recorder test "refuses to change a sent event"
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx` "refuses to delete a sent event before asking, saying
+  where it is corrected (FR-088)" and "refuses to edit a sent event, keeping
+  what was typed (FR-088)"; `internal/application/edit_sent_test.go::TestASentEventIsNeitherEditedNorDeleted`
 
 #### Sending
 
@@ -1089,25 +1112,30 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   it to the phone's share sheet (D-6).
 - Acceptance: Given five events of which two are sent, when `Send` is pressed,
   then the file holds the three unsent events and no others.
-- Verified by: probe M-4; recorder test "send offers one file of format 1"
+- Verified by: probe M-4; `frontend/src/recorder/SendPane.test.tsx` "shares a .txt file and marks it sent once the
+  share completes (FR-089, FR-090)";
+  `outbox_test.go::TestPrepareCarriesTheUnsentAndTheSymptomsTheyUse`
 
 **FR-090 Sent only when the share completes**
 - Priority: Must
 - Requirement: When the share sheet reports the file shared, the recorder shall
   mark the batch's events as sent.
-- Verified by: probe M-5; recorder test "a completed share marks the batch"
+- Verified by: probe M-5; `frontend/src/recorder/SendPane.test.tsx` "shares a .txt file and marks it sent once the
+  share completes (FR-089, FR-090)";
+  `outbox_test.go::TestConfirmMarksTheBatchAndAgainRepeatsIt`
 
 **FR-091 Share cancelled or failed**
 - Priority: Must
 - Requirement: If the share sheet is dismissed or reports a failure, then the
   recorder shall mark nothing as sent.
-- Verified by: recorder test "a cancelled share marks nothing"
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "marks nothing when the share sheet is dismissed (FR-091)"
 
 **FR-092 Nothing to send**
 - Priority: Must
 - Requirement: While no event is unsent, the recorder shall show `Send` as
   disabled.
-- Verified by: recorder test "send is disabled with nothing unsent"
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "offers no send with nothing waiting, nor a repeat before
+  a first send (FR-092, FR-097)"
 
 **FR-093 The desktop reads what the phone wrote**
 - Priority: Must
@@ -1116,8 +1144,10 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Acceptance: Given a desktop record of 40 events and a recorder file of 3 new
   events, when the file is imported, then the desktop reports 3 added, 0
   skipped; importing it again reports 0 added, 3 skipped.
-- Verified by: a file written by the recorder's own code, committed under
-  `testdata`, read by `transfer_test.go` on every run.
+- Verified by: `export_test.go::TestAPhoneSendReadsAsText`, which writes
+  through `export.File.Encode`, the code the recorder sends with, then reads
+  the `.txt` back; the import and a repeat import skipping everything were
+  checked by hand with a file sent from the phone.
 
 **FR-094 File name**
 - Priority: Should
@@ -1128,7 +1158,8 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   `.txt` one (M-4, D-9). The contents stay format version 1.
 - Acceptance: a send at 16 Nov 2026 17:12 writes
   `SymDiary-phone-2026-11-16-1712.txt`.
-- Verified by: recorder test "names the file by the send's local time"
+- Verified by: `outbox_test.go::TestPrepareCarriesTheUnsentAndTheSymptomsTheyUse`;
+  `internal/facade/outbox_test.go::TestThePhoneSendsWhatItRecorded`
 
 **FR-098 The desktop's Import lists text files**
 - Priority: Must
@@ -1161,7 +1192,8 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Acceptance: Given a last batch of three events, followed by two events
   recorded since, when `Send again` is confirmed, then the file holds the same
   three events and not the two.
-- Verified by: recorder test "send again repeats the last batch"
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "asks before sending the last batch again, naming the
+  risk (FR-095, FR-096)"; `outbox_test.go::TestConfirmMarksTheBatchAndAgainRepeatsIt`
 
 **FR-096 Send again warns first**
 - Priority: Must
@@ -1171,13 +1203,15 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 - Rationale: the desktop matches events by all five fields
   (`internal/domain/event.go:47`), so the phone's original copy is a new event
   to it once the desktop's copy has changed.
-- Verified by: recorder test "send again asks first, naming the risk"
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "asks before sending the last batch again, naming the
+  risk (FR-095, FR-096)"
 
 **FR-097 No batch to repeat**
 - Priority: Must
 - Requirement: While no send has completed, the recorder shall show
   `Send again` as disabled.
-- Verified by: recorder test "send again is disabled before the first send"
+- Verified by: `frontend/src/recorder/SendPane.test.tsx` "offers no send with nothing waiting, nor a repeat before
+  a first send (FR-092, FR-097)"
 
 ## 4. Other requirements
 

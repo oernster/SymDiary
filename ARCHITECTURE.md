@@ -13,9 +13,9 @@ planting a violation and reading the exit code.
 | 1 | The domain depends on nothing: no other layer, no framework. | `tests/structural/boundary_test.go::TestDomainHasNoOutwardImports` |
 | 2 | The domain performs no IO and never reads the wall clock. Time arrives as an argument. | `TestDomainIsPure` |
 | 3 | The application layer depends on the domain and on the ports it declares, never on infrastructure or Wails. | `TestApplicationDoesNotImportInfrastructure` |
-| 4 | Only `main.go` wires infrastructure to the application. | `TestCompositionRootIsWhitelisted` |
+| 4 | Only the two composition roots wire infrastructure to the application: `main.go` for the desktop, `cmd/recorder/main.go` for the phone recorder. | `TestCompositionRootIsWhitelisted` |
 | 5 | No source file exceeds 400 lines; none sits in the 381 to 400 danger band. | `TestNoFileExceedsLineLimit`, `TestNoFileInDangerBand` |
-| 6 | SymDiary's own code opens no network connection: no `net` package in any of its packages, `connect-src 'none'` on the page. The one fetch is Wails' own, before the window opens, on a Windows machine missing WebView2 (REQUIREMENTS.md, Amendment 17). | `TestNoNetworkImports`, `TestThePageOpensNoConnection` |
+| 6 | SymDiary's own code opens no network connection: no `net` package in any of its packages, `connect-src 'none'` on the desktop's page and on the phone recorder's. The one fetch on the desktop is Wails' own, before the window opens, on a Windows machine missing WebView2 (REQUIREMENTS.md, Amendment 17). | `TestNoNetworkImports`, `TestThePageOpensNoConnection` |
 | 7 | The wire is stated twice, in Go and in TypeScript; the two agree field for field; the receipt's line kinds agree name for name with the page's union and with the document's styles. | `tests/structural/wire_test.go`, `tests/structural/linekind_test.go` |
 | 8 | Every colour lives in `frontend/src/theme.css`; every text pairing meets WCAG 2.2 AA in both modes. | `tests/structural/colours_test.go` |
 | 9 | Every exported type carries a doc comment. | `TestEveryExportedTypeIsDocumented` |
@@ -24,6 +24,7 @@ planting a violation and reading the exit code.
 | 12 | A control that rings while it is usable says so while it is not: the ring is green on hover or focus, permanently red while disabled. | `TestEveryRingedControlSaysWhenItIsInert` |
 | 13 | Each ring colour meets the 3:1 WCAG asks of a non-text indicator, in both modes. | `tests/structural/colours_test.go::TestEveryRingIsVisibleAgainstWhatItIsDrawnOn` |
 | 14 | Every place that writes to the log is declared, so FR-065's promise that the log holds no part of the record stays checkable. A new writer fails until it is declared, which is the moment to ask what it puts in the file. | `tests/structural/logscan_test.go::TestOnlyTheKnownPlacesWriteToTheLog` |
+| 15 | No page of the website loads a script from another site. The phone recorder keeps its events in the browser's storage for symdiary.com, which any script on any page of the site could read (NFR-PRIV-005). | `tests/structural/site_test.go::TestNoSitePageLoadsAScriptFromAnotherSite` |
 
 ## The layers
 
@@ -69,11 +70,13 @@ One service per user-visible action, over the ports in `ports.go`.
 
 | File | What it owns |
 |---|---|
-| `ports.go` | `Store`, `RecordFile` and `Clock`: everything the layer needs from outside. |
+| `ports.go` | `Store`, `Sent`, `RecordFile`, `RecordEncoder` and `Clock`: everything the layer needs from outside. `NothingSent` stands for the desktop, where nothing is ever sent. |
 | `record.go` | Recording, including which instant an event gets. |
-| `edit.go` | Editing, the deletion confirmation's wording and deletion. |
+| `edit.go` | Editing, the deletion confirmation's wording and deletion; on the phone, the refusal to change an event already sent. |
 | `history.go` | Listing, suggesting, the symptom list, renaming and building the receipt. |
 | `transfer.go` | Export; import too, skipping what is already held. |
+| `outbox.go` | The phone's sending: what is waiting, the file a send carries, the last batch again and marking a batch sent. |
+| `unavailable.go` | `Unavailable`, which stands in when the record could not be opened so that every action still answers. |
 | `about.go` | The About content and the credits. |
 | `errors.go` | The refusals, each wrapped round the reason it happened. |
 
@@ -81,8 +84,11 @@ One service per user-visible action, over the ports in `ports.go`.
 
 | Package | What it implements |
 |---|---|
-| `store` | The SQLite record, one transaction per write, plus `Unavailable`, which stands in when the file could not be opened so that every action still answers. |
-| `export` | The JSON export file: a versioned format, an atomic write and a distrustful read. |
+| `store` | The desktop's SQLite record, one transaction per write. |
+| `memstore` | The phone's record: held in memory and written whole through a `Snapshots` port after every change, plus what has been sent. |
+| `browserstore` | The phone's `Snapshots`: IndexedDB, reached through the browser from WebAssembly. It builds for `js/wasm` alone. |
+| `storetest` | One contract for a `Store`, run against both `store` and `memstore`, so the desktop and the phone keep the same record rules. |
+| `export` | The export file: a versioned format, an atomic write and a distrustful read that names any file it refuses. The phone's send is the same format, encoded to bytes for the share panel. |
 | `runlog` | The run log, plus pointing the process's error output at it before anything can fail. Ported from Bridge Talk. |
 | `pdf` | The document a reader takes to an appointment: a pure layout answering the rows of each page, then a renderer that turns a row into ink. |
 | `windowfocus` | Handing the page the keyboard as the window opens: on Windows it finds the child window WebView2 draws the page in and focuses it; elsewhere it does nothing. |
@@ -111,16 +117,36 @@ so nothing written is lost to the layout. Before anything is drawn, `glyphs.go`
 refuses a record holding a character the carried typeface cannot print, so a
 sheet never shows an empty box where the person's words were.
 
-### UI: the root package and `frontend/`
+### UI: `internal/facade`, the root package and `frontend/`
 
-`app.go` and `actions.go` are the facade: one bound method per action, each
+`internal/facade` is the facade both windows share: one method per action, each
 converting shapes, calling one service and converting back. `dto.go` holds the
-wire shapes. `window.go` holds the file dialogs, the browser opener, the keyboard handover
-and the single-instance lock.
-`main.go` is the composition root.
+wire shapes; `outbox.go` the phone's sending. The desktop's `App` in the root
+package embeds `facade.Core` and adds what only a desktop does (Export, Import,
+Save PDF, Donate) in `actions.go`. `window.go` holds the file dialogs, the
+browser opener, the keyboard handover and the single-instance lock. `main.go`
+is the composition root.
 
 The page in `frontend/src` is a client of the facade through `api.ts` and
 nothing else.
+
+### The phone recorder: `cmd/recorder` and `frontend/src/recorder`
+
+The same domain and application, compiled to WebAssembly (Amendment 21).
+`cmd/recorder/main.go` is its composition root: it opens `memstore` over
+`browserstore`, builds the services and `facade.Outbox`, then `bridge.go` puts
+the facade where the page already looks for the desktop's
+(`window.go.main.App`), each method answering a promise. The page cannot tell
+the two windows apart, so the desktop's recording form and event rows run
+there unchanged. Go's clock in the browser is a fixed offset from start-up, so
+the page names its time zone before Go starts and the binary carries the zone
+tables.
+
+`frontend/src/recorder` is the phone's own page: the form shows at once while
+Go loads behind it (FR-100); the copy just opened takes a Web Lock from any
+older copy, which stops (FR-103); Send hands the file to the share panel and
+marks events sent only once the share completes. `build-recorder.ps1` builds it
+into `docs/app/`, which the website publishes as `symdiary.com/app/`.
 
 ### The setup program: `installer/`
 
@@ -184,7 +210,7 @@ chosen, what was given up and what each costs is
 | The record is drawn as a PDF rather than printed by the browser. | A page belongs to whichever engine the desktop ships, so the same record came off the paper three different ways, with what the reader got depending also on a tickbox in their own print dialog. The record is the product. Drawing it ourselves also buys what no browser would keep: an event never split across two sheets, a page number on every page, a document the suite can measure rather than one only a printer can. | A PDF library, a typeface carried in the binary and a layout to maintain, in exchange for the print stylesheet and the page-margin tricks it replaces. |
 | The store resolves a symptom by key, creating it when absent. | Recording an event and creating its symptom is one transaction, so a failure leaves neither. | The store holds a key column the domain computes. |
 | An edit sends no time unless the user changed it. | An empty time means "keep what is held", so an edit cannot move an occurrence to the moment of the edit. The rule is structural rather than remembered. | The edit form compares before sending. |
-| A record that will not open becomes `store.Unavailable`. | The window opens and says what is wrong, instead of a program that never appears. Every action answers with the same reason. | Eight one-line methods that refuse. |
+| A record that will not open becomes `application.Unavailable`. | The window opens and says what is wrong, instead of a program that never appears. Every action answers with the same reason, on the desktop and on the phone alike. | Eleven one-line methods that refuse. |
 | Times are stored as RFC 3339 with their offset. | The instant reads back as the same instant; an export carries the offset it was written in. | Ordering happens in Go rather than in SQL. |
 | No encryption at rest. | A passphrase is a thing to lose; the user's own account already guards the file. Stated in the README rather than assumed. | Anyone who can sign in as the user can read the record. |
 | SymDiary opens dark and carries its own switch, rather than following Windows. | A window that changes under the reader because the desktop reached dusk is a surprise; a button in the bar is one press away and what it chooses is remembered. The palette is held to AA in both modes by a test either way. | The page owns a preference, so the tokens hang off an attribute rather than a media query; the setup program carries the same button so the two cannot disagree. |

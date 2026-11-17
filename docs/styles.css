@@ -422,9 +422,11 @@ section .intro {
   padding: 4px 14px;
 }
 
+/* Four cards (three desktops and Android) fit one row of the 1080px wrap at
+   240px each; narrower, they fall two by two rather than leaving one alone. */
 .downloads {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
   margin-top: 28px;
 }

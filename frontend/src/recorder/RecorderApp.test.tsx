@@ -61,6 +61,14 @@ describe('the phone recorder', () => {
     expect(await screen.findByText('Storage is unavailable.')).toBeInTheDocument()
   })
 
+  it('asks for persistent storage when it opens (FR-080)', async () => {
+    installBridge()
+    const persist = vi.fn(() => Promise.resolve(true))
+    storageAnswers(persist)
+    renderApp()
+    await waitFor(() => expect(persist).toHaveBeenCalled())
+  })
+
   it('says the events may be cleared when the browser will not keep them (FR-081)', async () => {
     installBridge()
     storageAnswers(() => Promise.resolve(false))

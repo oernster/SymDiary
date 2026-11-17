@@ -10,15 +10,17 @@ records what was weighed and deliberately left alone.
 
 ### Local first, one person, one machine
 
-Everything SymDiary keeps is one file in the place the platform gives a
-program for its own settings, for the one person whose record it is.
+The record is one file in the place the platform gives a program for its own
+settings, for the one person whose record it is. The window keeps its theme and
+the last appointment beside it rather than in it. A phone running the recorder
+keeps its own events until they are sent to the desktop.
 
 - **Rather than:** an account, a server or anything synchronised between
   machines.
 - **Gains:** nothing to sign in to; nothing to run; it works with the network
   switched off.
-- **Costs:** the record belongs to that one machine. Moving it means exporting
-  it and importing it on the other.
+- **Costs:** the record belongs to one desktop. Moving it means exporting it and
+  importing it on the other; a phone only ever adds to it.
 
 ### A recorder, not a diagnostician
 
@@ -84,7 +86,10 @@ by tests over the code and by the page's own security policy, not left as a
 promise. That includes the one feature most desktop applications reach for:
 nothing asks whether a newer release exists. The single fetch that can happen
 belongs to the window toolkit, on a Windows machine missing the component the
-window is drawn with (see the Windows 10 entry below).
+window is drawn with (see the Windows 10 entry below). On the phone, the
+recorder's own service worker fetches the recorder's own files from the site so
+it can open offline; a send leaves the phone only through the app the person
+shares it to.
 
 - **Rather than:** a promise that the network is used sparingly; a daily update
   check.
@@ -264,12 +269,15 @@ a record written by a newer SymDiary is refused rather than guessed at.
 
 ### Room for other kinds of event
 
-Every event carries a kind, which today is always a symptom.
+The desktop's record stores a kind on every event, which today is always a
+symptom. Nothing else carries it yet: the rules, the export and the phone know
+only symptoms.
 
 - **Rather than:** a record that could only ever hold symptoms.
 - **Gains:** medication, meals or sleep could follow without rewriting the
   events already held.
-- **Costs:** a field that holds one value.
+- **Costs:** a column that holds one value; the rest of the product would still
+  have to learn a second kind.
 
 ## The symptom record
 
@@ -428,8 +436,7 @@ person is asked where to save); the refusal names the characters.
 
 - **Rather than:** printing the font's empty box in place of each, which is what
   happened before: the window showed the note whole while the sheet showed boxes;
-  carrying a typeface for every script, which costs tens of megabytes in every
-  download; borrowing a font from the operating system, a failure path that
+  carrying a typeface for every script in every download; borrowing a font from the operating system, a failure path that
   differs on every desktop.
 - **Gains:** the sheet never silently loses the person's words.
 - **Costs:** a person writing in a script outside the typeface cannot save a PDF
@@ -492,6 +499,106 @@ refused.
   reads back whole rather than refused.
 - **Costs:** a hand-edited file can place an event in the future. Raised by the
   2026-10-03 audit and kept on the owner's ruling, so it is not reopened.
+
+## The phone recorder
+
+### An installable web page, Android first
+
+The phone recorder is a page installed from the site to the home screen, where
+it opens like an app and works with the network off. It is offered on Android
+alone until it can be measured on an iPhone.
+
+- **Rather than:** a native app in each store; claiming iPhone support nobody
+  has seen work.
+- **Gains:** no store, account or review between the person and the recorder;
+  nothing is claimed that has not been run.
+- **Costs:** iPhone users have no recorder yet; installing takes a few steps in
+  the browser rather than one tap in a store.
+
+### The desktop's own rules, run on the phone
+
+The recorder runs the same Go rules and use cases as the desktop, compiled to
+WebAssembly. The form is drawn first while the rules load.
+
+- **Rather than:** rewriting the rules for the page.
+- **Gains:** one home for every rule; an event recorded on the phone is held to
+  exactly what the desktop holds it to.
+- **Costs:** a larger download for the phone; a moment before the first event
+  can be saved.
+
+### The rules arrive inside a script
+
+The compiled rules are shipped as text inside a script of the recorder's own,
+because the page's security policy allows it no connections at all, not even to
+its own site.
+
+- **Rather than:** fetching the compiled file, which needs a connection the
+  policy would have to permit.
+- **Gains:** the recorder's page can reach nothing; the promise that the record
+  never leaves by itself holds on the phone as on the desktop.
+- **Costs:** the rules travel about a third larger than the compiled file.
+
+### Handed over as a file through the share sheet
+
+A send is an ordinary export, shared through the phone's own share sheet to
+wherever the person chooses, then imported on the desktop. It travels as a text
+file because Chrome on Android refuses to share a JSON one; the contents are the
+desktop's export format unchanged.
+
+- **Rather than:** a link over Wi-Fi; a server between the two.
+- **Gains:** the desktop still opens no connection; the person picks the route
+  (email to themselves, a cloud folder, a cable).
+- **Costs:** a file to move by hand; a .txt extension on what is really an
+  export.
+
+### A send carries only what has not been sent
+
+Each send holds only the events not yet sent. A send is marked done only when
+the share completes. Send again repeats the last batch, after a warning, for a
+file that never arrived.
+
+- **Rather than:** sending the whole phone record each time.
+- **Gains:** each file is small; importing it adds only what is new.
+- **Costs:** a lost file has to be noticed and sent again by the person.
+
+### A sent event is final on the phone
+
+Once an event has been sent it can no longer be edited or deleted on the phone;
+the desktop owns its corrections. The phone keeps every event it records.
+
+- **Rather than:** editing on both and reconciling the two.
+- **Gains:** one place where a sent observation is corrected; no format change
+  to carry edits across.
+- **Costs:** a mistake noticed on the phone after sending is corrected on the
+  desktop.
+
+### The PDF stays on the desktop
+
+The phone records and sends. It does not draw the sheet for a doctor.
+
+- **Rather than:** a second document drawn by the phone.
+- **Gains:** one sheet, drawn one way, from one complete record.
+- **Costs:** a sheet needs the desktop.
+
+### Served from the product's own site
+
+The recorder is served from symdiary.com/app by the same GitHub Pages site, from
+the one repository. The site loads no script from another origin and keeps no
+visitor count, since anything it loaded could reach the recorder's storage.
+
+- **Rather than:** a separate repository or address for the recorder, which
+  GitHub Pages would need a second custom domain for; counting visits.
+- **Gains:** nothing but SymDiary's own code ever runs beside the recorder.
+- **Costs:** the site no longer knows how many people visit it.
+
+### The newest copy takes over
+
+When a new release reaches the phone, its copy replaces the old one at once and
+the old files are discarded.
+
+- **Rather than:** waiting until every open copy of the recorder has closed.
+- **Gains:** a phone never runs a mix of two releases.
+- **Costs:** an update can arrive while the recorder is open.
 
 ## The interface
 

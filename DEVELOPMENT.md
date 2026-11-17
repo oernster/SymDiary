@@ -94,7 +94,9 @@ In order, it:
 
 1. Reads `VERSION`.
 2. Runs `test.ps1` and stops on failure, unless `-Fast` was given.
-3. Builds `./cmd/recorder` for `js/wasm` with the same version flag.
+3. Builds `./cmd/recorder` for `js/wasm` with the same version flag and
+   `-buildvcs=false`, so the binary carries no commit stamp and only changes
+   when its code does.
 4. Builds the page with `npm --prefix frontend run build:recorder`.
 5. Collects `docs/app/`: the page as `index.html`, the rules as
    `symdiary-wasm.js` (base64, because the page's `connect-src 'none'` forbids
@@ -163,7 +165,8 @@ Run it whenever a master changes.
 ## The website
 
 The site is plain HTML under `docs/`, served by GitHub Pages: a home page plus
-Features, Why and Get it, sharing `styles.css` and `site.js`. Each page links
+Features, Why and Get it, sharing `styles.css` and `site.js`, with the phone
+recorder under `docs/app/` (built, never hand-edited). Each page links
 those two files with a hash of their content, so a browser fetches the new file
 the moment it changes rather than pairing a new page with a cached old
 stylesheet. After editing either file:
@@ -191,11 +194,15 @@ it; nothing else holds one.
 1. Clear `TECH_DEBT.md` if one is open.
 2. Bump `VERSION` if a bump is owed against the newest tag.
 3. `./build.ps1` and check the gate is green.
-4. Launch the built executable and use it: record, save a PDF, export, import.
-5. Run `dist-installer/SymDiarySetup.exe` and walk each route: install, reopen
+4. `./build-recorder.ps1`, so the phone recorder's offline copy is renamed for
+   the new version and phones fetch it.
+5. Launch the built executable and use it: record, save a PDF, export, import,
+   including a file sent from the phone.
+6. Run `dist-installer/SymDiarySetup.exe` and walk each route: install, reopen
    for manage, repair, then uninstall, then run the checks only a person can
    settle; [TESTING.md](TESTING.md) says which kinds of behaviour those cover.
-6. Commit, tag and publish. Those are the owner's to run.
+7. Commit, tag and publish. Those are the owner's to run. A push publishes the
+   phone recorder with the site.
 
 To try setup without installing onto your own machine, start it with the two
 data folders pointed elsewhere. It still writes the real `HKCU` uninstall entry,
@@ -207,11 +214,13 @@ which its own uninstall removes again.
   [REQUIREMENTS.md](REQUIREMENTS.md) with acceptance criteria; a change to
   behaviour amends the specification first.
 - The domain performs no IO and never reads the clock.
-- Only `main.go` wires infrastructure to the application.
+- Only `main.go` and `cmd/recorder/main.go` wire infrastructure to the
+  application.
 - No file over 400 lines; none left between 381 and 400.
 - Every colour goes in `frontend/src/theme.css` and nowhere else.
-- A shape crossing the window boundary is written twice, in `dto.go` and in
-  `frontend/src/api.ts`. The structural test compares them.
+- A shape crossing the window boundary is written twice, in
+  `internal/facade/dto.go` and in `frontend/src/api.ts`. The structural test
+  compares them.
 - A call from the page takes a refusal handler as its last argument and answers
   null when refused, so a call that ignores a refusal does not compile.
 - A new guard is not a guard until a planted violation has made it fail.

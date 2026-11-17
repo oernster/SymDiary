@@ -317,17 +317,20 @@ func TestNoNetworkImports(t *testing.T) {
 }
 
 // TestThePageOpensNoConnection holds the front end to the same rule from the
-// other side: the Content-Security-Policy in index.html forbids it.
+// other side: the Content-Security-Policy forbids it, on the desktop's page and
+// on the phone recorder's (NFR-PRIV-004).
 func TestThePageOpensNoConnection(t *testing.T) {
-	path := filepath.Join(repoRoot(t), "frontend", "index.html")
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("reading %s: %v", path, err)
-	}
-	page := string(raw)
-	for _, wanted := range []string{"Content-Security-Policy", "connect-src 'none'", "default-src 'self'"} {
-		if !strings.Contains(page, wanted) {
-			t.Errorf("%s does not carry %q", filepath.Base(path), wanted)
+	for _, name := range []string{"index.html", "recorder.html"} {
+		path := filepath.Join(repoRoot(t), "frontend", name)
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading %s: %v", path, err)
+		}
+		page := string(raw)
+		for _, wanted := range []string{"Content-Security-Policy", "connect-src 'none'", "default-src 'self'"} {
+			if !strings.Contains(page, wanted) {
+				t.Errorf("%s does not carry %q", name, wanted)
+			}
 		}
 	}
 }

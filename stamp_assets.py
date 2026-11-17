@@ -10,6 +10,9 @@ an unchanged file keeps its address and its cache.
 before hashing, so a Windows checkout and the LF blob GitHub serves agree and a
 run on another machine does not rewrite every page.
 
+**Hand-written pages only.** The phone recorder under `docs/app` is built
+output whose files are already named by their content, so it is skipped.
+
 **Local links only.** A link that names a scheme, starts `//` or is
 root-absolute is somebody else's file or a path this page cannot resolve, so
 it is left exactly as written.
@@ -30,6 +33,9 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent
 SITE_DIR = ROOT / "docs"
 PAGE_PATTERN = "**/*.html"
+# The phone recorder is built output: Vite already names its files by their
+# content; build-recorder.ps1 replaces the whole folder on every build.
+BUILT_DIRS = (SITE_DIR / "app",)
 HASH_LENGTH = 10
 QUERY_KEY = "v"
 ASSET_LINK = re.compile(
@@ -81,6 +87,8 @@ def main() -> int:
     pending: list[tuple[pathlib.Path, bytes]] = []
     try:
         for page in sorted(SITE_DIR.glob(PAGE_PATTERN)):
+            if any(page.is_relative_to(built) for built in BUILT_DIRS):
+                continue
             text = page.read_bytes().decode("utf-8")
             stamped = versioned(page, text, hashes)
             if stamped != text:
