@@ -1,4 +1,4 @@
-package main
+package facade
 
 import (
 	"errors"
@@ -29,7 +29,7 @@ func TestTheSheetSaysItIsNotADiagnosis(t *testing.T) {
 	t.Parallel()
 	// The one line on the sheet that a reader who has never met SymDiary depends
 	// on. It is asserted whole, because a half of it says something else.
-	app, _, _ := facade(t)
+	app, _ := facade(t)
 	record(t, app, RecordFormDTO{Symptom: "Tired"})
 
 	lines, err := app.Receipt("2026-08-23", "2026-09-22", "")
@@ -50,7 +50,7 @@ func TestTheSheetSaysItIsNotADiagnosis(t *testing.T) {
 
 func TestTheReceiptTheWindowSends(t *testing.T) {
 	t.Parallel()
-	app, clock, _ := facade(t)
+	app, clock := facade(t)
 	record(t, app, RecordFormDTO{Symptom: "Tired", Note: "Only been awake for about 10 minutes."})
 	clock.now = clock.now.Add(time.Hour)
 
@@ -84,7 +84,7 @@ func TestTheSheetNamesTheLastAppointmentTheWindowSends(t *testing.T) {
 	t.Parallel()
 	// FR-046: the page decides whether to send the appointment; the sheet then
 	// carries it under the range, worded as the owner approved it.
-	app, _, _ := facade(t)
+	app, _ := facade(t)
 	record(t, app, RecordFormDTO{Symptom: "Tired"})
 
 	lines, err := app.Receipt("2026-08-23", "2026-09-22", "2026-09-02")

@@ -8,18 +8,19 @@ import (
 	"testing"
 
 	"github.com/oernster/symdiary/internal/domain"
+	"github.com/oernster/symdiary/internal/facade"
 	"github.com/oernster/symdiary/internal/infrastructure/pdf"
 )
 
 // aTiredEvent puts one event in the record so there is something to write.
 func aTiredEvent(t *testing.T, app *App) {
 	t.Helper()
-	record(t, app, RecordFormDTO{Symptom: "Tired", Note: "Only been awake for about 10 minutes."})
+	record(t, app, facade.RecordFormDTO{Symptom: "Tired", Note: "Only been awake for about 10 minutes."})
 }
 
 func TestSavePDFWritesTheRecordWhereTheReaderChose(t *testing.T) {
 	t.Parallel()
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 
@@ -46,7 +47,7 @@ func TestSavePDFSaysSoWhenTheDocumentCannotBeWritten(t *testing.T) {
 	t.Parallel()
 	// A folder that is really a file: the reader chose somewhere nothing can be
 	// written, so the save must be refused rather than reported as done.
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	blocker := filepath.Join(t.TempDir(), "not-a-folder")
 	if err := os.WriteFile(blocker, nil, 0o600); err != nil {
@@ -66,7 +67,7 @@ func TestTheSaveDialogAsksForTheKindOfFileItIsActuallyWriting(t *testing.T) {
 	// offered under the export filter was saved as `record.pdf.json`: a file
 	// whose name said one thing, whose contents said another and which no
 	// viewer would open. Found on macOS 2026-09-23.
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 
@@ -123,7 +124,7 @@ func TestEveryKindOfFileSaysWhatItIs(t *testing.T) {
 
 func TestSavePDFWritesNothingWhenTheReaderCancels(t *testing.T) {
 	t.Parallel()
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	chooser.save = ""
 
@@ -139,7 +140,7 @@ func TestSavePDFWritesNothingWhenTheReaderCancels(t *testing.T) {
 
 func TestSavePDFRefusesAnEmptyRangeBeforeAskingWhereToSave(t *testing.T) {
 	t.Parallel()
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	unreachable := filepath.Join(t.TempDir(), "should-not-exist.pdf")
 	chooser.save = unreachable
@@ -158,8 +159,8 @@ func TestSavePDFRefusesAnEmptyRangeBeforeAskingWhereToSave(t *testing.T) {
 
 func TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave(t *testing.T) {
 	t.Parallel()
-	app, _, chooser := facade(t)
-	record(t, app, RecordFormDTO{Symptom: "Tired", Note: "头痛"})
+	app, _, chooser := window(t)
+	record(t, app, facade.RecordFormDTO{Symptom: "Tired", Note: "头痛"})
 	unreachable := filepath.Join(t.TempDir(), "should-not-exist.pdf")
 	chooser.save = unreachable
 
@@ -180,7 +181,7 @@ func TestSavePDFRefusesTextItCannotPrintBeforeAskingWhereToSave(t *testing.T) {
 
 func TestSavePDFRefusesADateItCannotRead(t *testing.T) {
 	t.Parallel()
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	aTiredEvent(t, app)
 
 	if _, err := app.SavePDF("not-a-date", "2026-09-22", ""); err == nil {
@@ -196,7 +197,7 @@ func TestSavePDFWithNoWriterIsAnInternalFault(t *testing.T) {
 	// A facade built without a sheet is a wiring mistake rather than a state the
 	// reader can reach, so it answers the same internal fault every other bound
 	// method answers rather than ending the window.
-	app, _, chooser := facade(t)
+	app, _, chooser := window(t)
 	aTiredEvent(t, app)
 	chooser.save = filepath.Join(t.TempDir(), "record.pdf")
 	app.sheet = nil

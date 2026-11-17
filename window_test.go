@@ -62,7 +62,7 @@ func TestReadyAsksTheWindowForTheKeyboard(t *testing.T) {
 	// WebView2 gives the page DOM focus without giving the webview the
 	// keyboard, so every Tab reached nothing until the page was clicked. The
 	// page cannot ask for this itself; the window has to.
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	focuser := &countingFocuser{}
 	app.focuser = focuser
 
@@ -77,7 +77,7 @@ func TestReadyWithNoFocuserStillOpens(t *testing.T) {
 	// A facade built without a focuser is a wiring mistake, not a state the
 	// user can reach. It costs the keyboard, which is not worth ending a run
 	// over: the record is still readable with a mouse.
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	app.focuser = nil
 	app.ready(t.Context())
 }
@@ -85,7 +85,7 @@ func TestReadyWithNoFocuserStillOpens(t *testing.T) {
 func TestStartupAndShutdown(t *testing.T) {
 	t.Parallel()
 	closed := false
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	app.close = func() error {
 		closed = true
 		return errors.New("the record would not close")

@@ -1,4 +1,4 @@
-package main
+package facade
 
 import (
 	"github.com/oernster/symdiary/internal/application"
@@ -90,16 +90,25 @@ type AboutDTO struct {
 }
 
 // eventDTO converts an event for the page.
-func (a *App) eventDTO(event domain.Event) EventDTO {
+func (c *Core) eventDTO(event domain.Event) EventDTO {
 	return EventDTO{
 		ID:         int64(event.ID),
 		Definition: int64(event.Definition),
 		Symptom:    event.Symptom,
-		OccurredAt: domain.FormatLocal(event.OccurredAt, a.zone),
-		When:       domain.FormatDisplay(event.OccurredAt, a.zone),
+		OccurredAt: domain.FormatLocal(event.OccurredAt, c.zone),
+		When:       domain.FormatDisplay(event.OccurredAt, c.zone),
 		Severity:   event.Severity.String(),
 		Note:       event.Note,
 	}
+}
+
+// eventDTOs converts events for the page.
+func (c *Core) eventDTOs(events []domain.Event) []EventDTO {
+	out := make([]EventDTO, 0, len(events))
+	for _, event := range events {
+		out = append(out, c.eventDTO(event))
+	}
+	return out
 }
 
 // definitionDTOs converts definitions for the page.

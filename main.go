@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/oernster/symdiary/internal/application"
+	"github.com/oernster/symdiary/internal/facade"
 	"github.com/oernster/symdiary/internal/infrastructure/export"
 	"github.com/oernster/symdiary/internal/infrastructure/pdf"
 	"github.com/oernster/symdiary/internal/infrastructure/runlog"
@@ -77,7 +78,7 @@ func main() {
 	}
 
 	clock := systemClock{}
-	services := Services{
+	services := facade.Services{
 		Recorder: application.NewRecorder(record, clock),
 		Editor:   application.NewEditor(record, clock, zone),
 		History:  application.NewHistory(record, zone),

@@ -24,9 +24,11 @@ import (
 // lines, never the record's.
 var logWriters = map[string]int{
 	// The record could not be closed; the reason is the store's, not the user's.
-	// A bound method panicked: the recovered value and the stack. A window with
-	// no focuser: a fixed sentence.
-	"app.go": 3,
+	// A window with no focuser: a fixed sentence.
+	"app.go": 2,
+	// A bound method panicked: the recovered value and the stack. Every window
+	// shares this guard (Amendment 21), so it lives with the facade.
+	"internal/facade/facade.go": 1,
 	// The record could not be opened; the window could not be run. A path
 	// and an error each.
 	//

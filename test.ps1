@@ -106,6 +106,11 @@ try {
 # It moved 76 to 77 when printing through the window was replaced by saving a
 # PDF: the bound method now decides something (the range, the name it suggests,
 # the order it asks in) where before it forwarded one call to the runtime.
+# It moved 77 to 53 when the methods every window shares left for
+# internal/facade, so the phone recorder could call them too (Amendment 21):
+# they were the root's best-tested code, so what stays is mostly the window
+# glue no test can reach. The facade enters the table at 100, the number it
+# reached once filtering the history by symptom got the test it never had.
 # The run log moved the other way, 74 to 81, when its folder rule became a pure
 # function taking the platform as an argument: all three platforms' answers are
 # now exercised on whichever platform the suite runs on. The run log needs a windowed process with no error output, so
@@ -130,7 +135,8 @@ try {
 # cannot happen to a font compiled into the binary.
 # TESTING.md names each shortfall.
 $measured = [ordered]@{
-    '.'                                      = 77
+    '.'                                      = 53
+    './internal/facade'                      = 100
     './installer'                            = 69
     './internal/infrastructure/store'        = 92
     './internal/infrastructure/export'       = 91

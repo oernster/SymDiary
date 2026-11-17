@@ -24,7 +24,7 @@ func (o *recordingOpener) Open(address string) { o.asked = append(o.asked, addre
 
 func TestDonateAsksTheDesktopForTheDonationPage(t *testing.T) {
 	t.Parallel()
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	opener := &recordingOpener{}
 	app.opener = opener
 
@@ -54,7 +54,7 @@ func TestDonateOpensNothingWhenTheDesktopIsMissing(t *testing.T) {
 	// A facade built without an opener is a wiring mistake rather than a state
 	// the user can reach, so it must answer the same internal fault every other
 	// bound method answers, not end the window.
-	app, _, _ := facade(t)
+	app, _, _ := window(t)
 	app.opener = nil
 	if err := app.Donate(); err == nil {
 		t.Error("Donate with no opener answered no error, want the internal fault")

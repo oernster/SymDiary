@@ -77,17 +77,21 @@ func facadeFieldNames(t *testing.T, path, name string, structure *ast.StructType
 	return fields
 }
 
+// facadeDir is where the application's facade declares its wire shapes. Both
+// windows call it: the desktop's through Wails, the phone recorder's through
+// WebAssembly (Amendment 21).
+var facadeDir = filepath.Join("internal", "facade")
+
 // facadeDTOs returns every wire struct the application's facade declares, by
-// json field name. Only the files at the repository root are read: that is
-// where the facade is.
+// json field name.
 func facadeDTOs(t *testing.T, root string) map[string][]string {
 	t.Helper()
-	return dtosIn(t, root, root)
+	return dtosIn(t, root, filepath.Join(root, facadeDir))
 }
 
 // dtosIn reads the wire structs one directory declares. It takes the directory
-// rather than assuming the root because there are two facades: the
-// application's, at the root, plus the setup program's, under installer.
+// because there are two facades: the application's, under internal/facade,
+// plus the setup program's, under installer.
 func dtosIn(t *testing.T, root, dir string) map[string][]string {
 	t.Helper()
 	out := map[string][]string{}
