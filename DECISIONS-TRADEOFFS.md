@@ -618,14 +618,20 @@ visitor count, since anything it loaded could reach the recorder's storage.
 - **Gains:** nothing but SymDiary's own code ever runs beside the recorder.
 - **Costs:** the site no longer knows how many people visit it.
 
-### The newest copy takes over
+### Updates arrive by themselves
 
-When a new release reaches the phone, its copy replaces the old one at once and
-the old files are discarded.
+The recorder looks for a new release each time it comes back on screen. A new
+release replaces the old files at once; the page itself moves onto it only
+while it is out of sight, at once if it already is, otherwise the next time
+the person comes back. Any change to a shipped file counts as a release.
 
-- **Rather than:** waiting until every open copy of the recorder has closed.
-- **Gains:** a phone never runs a mix of two releases.
-- **Costs:** an update can arrive while the recorder is open.
+- **Rather than:** an update the person has to know to fetch by reloading;
+  waiting until every open copy of the recorder has closed; swapping the page
+  the moment a release lands.
+- **Gains:** nobody has to do anything to stay current; a phone never runs a
+  mix of two releases; an entry being typed is never swapped away.
+- **Costs:** a release reaches the screen one return later than it reaches the
+  phone.
 
 ## The interface
 

@@ -148,8 +148,12 @@ it (FR-104); no browser is required by name. The form shows at once while
 Go loads behind it (FR-100); the copy just opened takes a Web Lock from any
 older copy, which pauses and reloads itself once it is back on screen
 (FR-103); Send hands the file to the share panel and
-marks events sent only once the share completes. `build-recorder.ps1` builds it
-into `docs/app/`, which the website publishes as `symdiary.com/app/`.
+marks events sent only once the share completes. Updates need nothing from the
+user (FR-105): `update.ts` asks for a newer release whenever the page comes back
+on screen and reloads into one once its worker has taken over, at once off
+screen, otherwise on the next return. `build-recorder.ps1` builds it into
+`docs/app/`, which the website publishes as `symdiary.com/app/`, naming the
+worker's cache from a digest of every shipped file so any change is a release.
 
 ### The setup program: `installer/`
 

@@ -96,7 +96,22 @@ $files = @('./') + (Get-ChildItem $site -Recurse -File |
     ForEach-Object { $_.FullName.Substring($site.Length + 1).Replace('\', '/') } |
     Sort-Object)
 $listed = '[' + (($files | ForEach-Object { "`"$_`"" }) -join ', ') + ']'
-$worker = (Get-Content (Join-Path $templates 'sw.js') -Raw).Replace('__CACHE__', "symdiary-recorder-$version").Replace('__FILES__', $listed)
+
+# The cache is named from VERSION plus a digest of every file shipped, so any
+# change at all, a rules fix under the same version included, changes sw.js; a
+# changed sw.js is how a phone learns there is something new (FR-105).
+$digestLength = 12
+$fingerprints = ($files | Where-Object { $_ -ne './' } | ForEach-Object {
+    "$_ " + (Get-FileHash -Algorithm SHA256 (Join-Path $site $_)).Hash
+}) -join "`n"
+$sha = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $digestBytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($fingerprints))
+} finally {
+    $sha.Dispose()
+}
+$digest = (($digestBytes | ForEach-Object { $_.ToString('x2') }) -join '').Substring(0, $digestLength)
+$worker = (Get-Content (Join-Path $templates 'sw.js') -Raw).Replace('__CACHE__', "symdiary-recorder-$version-$digest").Replace('__FILES__', $listed)
 Write-Text (Join-Path $site 'sw.js') $worker
 
 $bytes = (Get-ChildItem $site -Recurse -File | Measure-Object Length -Sum).Sum

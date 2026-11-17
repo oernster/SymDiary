@@ -949,7 +949,7 @@ Decisions taken by the owner on 2026-11-16:
 | D-9 | The recorder shares a `.txt` file holding export format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json` (Q-17, M-4). |
 | D-10 | The recorder runs SymDiary's own Go domain and application, compiled to WebAssembly; the rules have one home (Q-12, M-6). |
 
-Priorities: 26 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
+Priorities: 27 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
 
 #### Recording on the phone
 
@@ -1102,6 +1102,26 @@ Priorities: 26 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   for each need, "counts sharing as missing when the browser says it
   cannot share a file" and "says the browser cannot run the recorder and names
   everything it lacks"
+
+**FR-105 Updates arrive by themselves**
+- Priority: Must
+- Requirement: When a newer release of the recorder is published, an installed
+  recorder shall take it up with nothing done by the user. Each time the
+  recorder comes back on screen it shall ask for a newer release. When a newer
+  release has taken over, the recorder shall reload at once if it is off
+  screen; if it is on screen, it shall reload the next time the user comes
+  back to it, never while it is in front of them. Any change to a shipped file
+  shall count as a newer release.
+- Rationale: nobody knows to pull a page down to update it (Oliver's ruling).
+  Reloading only while the recorder is out of sight means an entry being typed
+  is never swapped away.
+- Verified by: `frontend/src/recorder/update.test.ts`, "reloads at once when a
+  newer release takes over while the page is off screen", "waits until the
+  person comes back when a newer release takes over on screen", "reloads
+  nothing when the first worker takes control on a first visit", "asks for a
+  newer release each time the page comes back on screen" and "handles a check
+  that fails with no signal"; the cache named from a digest of every shipped
+  file by `build-recorder.ps1`; checked by hand on the phone across a release
 
 #### Correcting on the phone
 
@@ -1413,6 +1433,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 24 | 2026-11-17 | New FR-105 | An installed recorder updates itself: it asks for a newer release whenever it comes back on screen and reloads into one once it has taken over, at once when off screen, otherwise on the user's next return. Its offline cache is named from a digest of every shipped file as well as VERSION. | Owner's ruling: a user will never know to pull the page down. Measured in the preview: the first load after a rebuild still ran the previous bundle, the next load the new one. Read in the build script: a rebuild under the same VERSION that changed only the rules would have left `sw.js` byte for byte the same, so no phone would have seen it. |
 | 23 | 2026-11-17 | 2.3, NFR-PORT-001, Q-14, new FR-104 | The recorder no longer requires Chrome. It checks on opening for each thing it needs; where the browser lacks any, it starts nothing and names what is missing. | Owner's ruling: a product cannot force a browser on people. Only Chrome 157 was ever measured, which made it the stated requirement; the check moves that judgement onto each phone, so a browser nobody here has tried is told plainly whether it can run the recorder. |
 | 22 | 2026-11-17 | FR-103 | A copy of the recorder that a newer one paused reloads itself when the user comes back to it, taking the recorder back; while paused it offers a Reload button. | Owner's report from the phone: reopening the app showed the paused copy's message again. Only pulling the page down to reload brought the recorder back; nothing told the user so. Measured by the owner: a reload restores it. The page now does that reload itself the moment it is back on screen. |
 | 21 | 2026-11-16 | 1.3, 1.4, 2.1, 2.3, C-9, A-5, new 3.10 (FR-076 to FR-103), new NFR-PRIV-004 to 006, NFR-REL-002, NFR-USE-005 to 007, NFR-PORT-001, NFR-MAINT-006 and 007, 3.9, Appendices A to C | A phone recorder for Android joins the product. It records offline, keeps every event, edits only what it has not sent and hands unsent events to the desktop as a `.txt` file holding export format version 1 through the share sheet; the desktop's Import lists `.txt` beside `.json`. It runs the desktop's own Go rules compiled to WebAssembly, served from `symdiary.com/app/`; the site stops loading GoatCounter. The 3.9 row "Phone or web version" goes; iPhone joins 3.9. Synchronisation between machines stays out of scope. | Owner's request: symptoms are noticed away from the desk, so the recorder belongs where they are noticed. Every behaviour the phone's browser owns was measured on the owner's Galaxy Z Flip 5 in Chrome 157 before it was written (M-2 to M-6). Two of those measurements changed the design: Chrome refuses to share `.json` whatever it is declared as, so the file is `.txt` (D-9); the desktop matches events on all five fields, so a send carries only unsent events or a correction made on the desktop would come back (D-6). A Wi-Fi link was rejected because it would break NFR-PRIV-001 and needs a certificate the phone trusts. The counter goes because any script on a page of symdiary.com can read the recorder's storage, which holds personal data. A subdomain would have kept them apart; GitHub Pages gives one repository one custom domain. |

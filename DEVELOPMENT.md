@@ -104,7 +104,9 @@ In order, it:
    manifest from `build/recorder/`, with the manifest's colour read from
    `--bg` in `theme.css`.
 6. Writes `sw.js`, listing every file it shipped under a cache named from
-   `VERSION`, so the recorder opens offline.
+   `VERSION` plus a digest of those files, so the recorder opens offline. Any
+   change to a shipped file changes `sw.js`, which is how an installed phone
+   finds the new release and updates itself (FR-105).
 
 `docs/app/` is the whole recorder. It is committed with the website, so a push
 publishes it as `symdiary.com/app/`. No page of the site may load a script

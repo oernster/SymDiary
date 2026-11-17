@@ -2,7 +2,10 @@
 
 // The phone recorder's service worker: it keeps every file of the page, so the
 // recorder opens with the network off (FR-078). build-recorder.ps1 fills in the
-// tokens: the cache is named from VERSION, the list is every file it shipped.
+// tokens: the cache is named from VERSION and a digest of every file shipped, so
+// any change makes this file differ and the phone installs it (FR-105); the list
+// is every file it shipped. A new worker takes over at once; the page reloads
+// itself to follow it (frontend/src/recorder/update.ts).
 const CACHE = "__CACHE__";
 const FILES = __FILES__;
 

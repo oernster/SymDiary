@@ -8,6 +8,7 @@ import { RecorderApp } from './RecorderApp'
 import { cannotRun, missing, type Browser } from './capabilities'
 import { listenForInstall, reloadOnReturn, startGo, takeOver, type RecorderWindow } from './start'
 import { TakenOver } from './TakenOver'
+import { keepUpToDate } from './update'
 import '../theme.css'
 import '../styles.css'
 import '../lists.css'
@@ -65,6 +66,12 @@ async function open(root: HTMLElement) {
     navigator.serviceWorker
       ? navigator.serviceWorker.register(workerScript)
       : Promise.reject(new Error('this browser keeps no service worker')),
+  )
+  // A refused registration is already said on screen by RecorderApp (notOffline).
+  worker.then(
+    (registration) =>
+      keepUpToDate(navigator.serviceWorker, document, window, () => registration.update(), reload),
+    () => {},
   )
   view.render(
     <React.StrictMode>
