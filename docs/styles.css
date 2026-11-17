@@ -242,6 +242,16 @@ a {
   max-width: 100%;
 }
 
+/* Phone screenshots are tall and narrow: two sit side by side at about the
+   size of a phone in the hand, one above the other where the page is narrow. */
+.phones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 320px));
+  justify-content: center;
+  gap: 36px;
+  margin-top: 46px;
+}
+
 figure {
   margin: 0;
 }
