@@ -49,7 +49,10 @@ $wasm = Join-Path ([System.IO.Path]::GetTempPath()) 'symdiary-recorder.wasm'
 $env:GOOS = 'js'
 $env:GOARCH = 'wasm'
 try {
-    go build -ldflags "-s -w -X main.appVersion=$version" -o $wasm ./cmd/recorder
+    # -buildvcs=false: Go otherwise stamps the commit, its time and whether the
+    # tree was edited into the binary, so the committed docs/app copy changed
+    # on every commit even when no code had.
+    go build -buildvcs=false -ldflags "-s -w -X main.appVersion=$version" -o $wasm ./cmd/recorder
     if ($LASTEXITCODE -ne 0) { throw "go build failed with exit code $LASTEXITCODE" }
 } finally {
     Remove-Item Env:GOOS, Env:GOARCH
