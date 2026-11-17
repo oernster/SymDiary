@@ -1,0 +1,53 @@
+/*
+  The phone recorder's layout (Amendment 21). The desktop's sheets assume a
+  wide window; this lays the same panes down one narrow column.
+*/
+
+/* Each pane stands apart from the next, so a button never sits on a heading. */
+.recorder {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-top: 16px;
+}
+
+.recorder h1 {
+  margin-bottom: 12px;
+}
+
+/*
+  Buttons side by side. A ring reaches 4px outside its button (2px of outline
+  at 2px of offset), so two neighbours need more than 8px between them or their
+  rings meet; a disabled button wears its ring all the time.
+*/
+.button-row,
+.recorder .row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/*
+  An event takes its time and symptom on one line, the note under them, then
+  its buttons: the desktop's columns are wider than a phone.
+*/
+.recorder .events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.recorder .event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+
+.recorder .event .note,
+.recorder .event .row-actions {
+  flex-basis: 100%;
+}

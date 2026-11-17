@@ -4,9 +4,9 @@
 /** The Web Locks name every copy of the recorder asks for. */
 export const lockName = 'symdiary-recorder'
 
-/** Said by a second copy, which starts nothing so only one copy writes the phone's events (FR-103). */
-export const openElsewhere =
-  'SymDiary is already open on this phone in another tab or window. Use that one: this copy has not started, so the two cannot write over each other.'
+/** Said by an older copy once a newer one has taken over, so only one copy writes the phone's events (FR-103). */
+export const takenOver =
+  'SymDiary has been opened again on this phone, so this copy has stopped. The newer one has your events. You can close this one.'
 
 /** The scripts build-recorder.ps1 places beside the page. */
 export const goSupport = 'wasm_exec.js'
@@ -27,18 +27,23 @@ export interface RecorderWindow {
 }
 
 /**
- * onlyCopy holds the recorder's lock for as long as the page stays open,
- * answering true when this is the only copy; false when another holds it.
+ * takeOver makes this copy the one that writes the phone's events, taking the
+ * recorder's lock from any copy already holding it (FR-103). It settles once
+ * the lock is held; lost is called if a newer copy later takes it from this one.
  */
-export function onlyCopy(locks: LockManager): Promise<boolean> {
-  return new Promise((answer, refuse) => {
+export function takeOver(locks: LockManager, lost: () => void): Promise<void> {
+  return new Promise((held, refuse) => {
     locks
-      .request(lockName, { ifAvailable: true }, (lock) => {
-        answer(lock !== null)
+      .request(lockName, { steal: true }, () => {
+        held()
         // A promise that never settles keeps the lock until the page goes.
-        return lock ? new Promise<void>(() => {}) : undefined
+        return new Promise<void>(() => {})
       })
-      .catch(refuse)
+      .catch((reason: unknown) => {
+        // The browser answers a lock taken by another copy with AbortError.
+        if (reason instanceof DOMException && reason.name === 'AbortError') lost()
+        else refuse(reason)
+      })
   })
 }
 

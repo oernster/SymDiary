@@ -66,13 +66,15 @@ export function SendPane({ waiting, refused, tell, changed }: Props) {
           ? 'Nothing is waiting to be sent.'
           : `${count} not yet sent, oldest ${waiting?.oldest}.`}
       </p>
-      <button type="button" className="primary" disabled={count === 0}
-        onClick={async () => send(await api.prepare(refused))}>
-        Send
-      </button>
-      <button type="button" disabled={!waiting?.hasBatch} onClick={() => setAsking(true)}>
-        Send again
-      </button>
+      <div className="button-row">
+        <button type="button" className="primary" disabled={count === 0}
+          onClick={async () => send(await api.prepare(refused))}>
+          Send
+        </button>
+        <button type="button" disabled={!waiting?.hasBatch} onClick={() => setAsking(true)}>
+          Send again
+        </button>
+      </div>
       {asking && (
         <ConfirmDialog text={againWarning} confirmLabel="Send again"
           onCancel={() => setAsking(false)}

@@ -1046,16 +1046,18 @@ Priorities: 24 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 
 **FR-103 One copy at a time**
 - Priority: Must
-- Requirement: If the recorder opens while another copy is open on the same
-  phone, then the new copy shall start nothing and shall say so. Where it
-  cannot tell whether another copy is open, it shall do the same.
+- Requirement: When the recorder opens while another copy is open on the same
+  phone, the copy just opened shall show the recorder and the older copy shall
+  stop and say so. Where a copy cannot tell whether another is open, it shall
+  start nothing and say so.
 - Rationale: two copies writing the phone's storage could write over each
-  other's events. A page cannot bring another tab forward as FR-064 does on
-  the desktop, so the second copy says where the recorder is instead (Oliver's
-  ruling).
-- Verified by: `frontend/src/recorder/start.test.ts`, "answers false when
-  another copy holds it" and "refuses when the lock cannot be asked for"; that
-  the second copy starts nothing is checked by hand on the phone
+  other's events, so only one may write. The one the user just opened is the
+  one they mean to use (Oliver's ruling): a copy left open in a Chrome tab must
+  never block the home screen icon.
+- Verified by: `frontend/src/recorder/start.test.ts`, "takes the lock from any
+  copy already holding it", "stops this copy once a newer one takes the lock
+  away" and "refuses when the lock cannot be asked for"; checked by hand on the
+  phone with a Chrome tab and the icon
 
 #### Correcting on the phone
 

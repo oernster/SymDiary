@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
-import { goRules, goSupport, listenForInstall, lockName, onlyCopy, startGo, type RecorderWindow } from './start'
+import { goRules, goSupport, listenForInstall, lockName, startGo, takeOver, type RecorderWindow } from './start'
 
 /** The smallest module WebAssembly will compile: the magic number and version 1. */
 const emptyModule = btoa(String.fromCharCode(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))
 
-/** locksAnswering is a lock manager whose lock is free or held elsewhere. */
-function locksAnswering(free: boolean) {
+/**
+ * locksGranting is a lock manager that grants the lock, then settles the
+ * request as the test says: never while held; rejected once taken away.
+ */
+function locksGranting(afterwards: Promise<void> = new Promise(() => {})) {
   const request = vi.fn((_name: string, _options: LockOptions, granted: LockGrantedCallback<unknown>) => {
-    void granted(free ? ({ name: lockName, mode: 'exclusive' } as Lock) : null)
-    return Promise.resolve()
+    void granted({ name: lockName, mode: 'exclusive' } as Lock)
+    return afterwards
   })
   return { locks: { request } as unknown as LockManager, request }
 }
@@ -26,20 +29,25 @@ function goThat(run: (win: RecorderWindow) => Promise<void>, win: RecorderWindow
 /** loading answers every script as loaded, after doing what the test says. */
 const loading = (act: () => void) => vi.fn(async () => act())
 
-describe('one copy at a time', () => {
-  it('answers true when no other copy holds the lock, asking without waiting', async () => {
-    const { locks, request } = locksAnswering(true)
-    await expect(onlyCopy(locks)).resolves.toBe(true)
-    expect(request).toHaveBeenCalledWith(lockName, { ifAvailable: true }, expect.any(Function))
+describe('the newest copy takes over (FR-103)', () => {
+  it('takes the lock from any copy already holding it', async () => {
+    const { locks, request } = locksGranting()
+    const lost = vi.fn()
+    await expect(takeOver(locks, lost)).resolves.toBeUndefined()
+    expect(request).toHaveBeenCalledWith(lockName, { steal: true }, expect.any(Function))
+    expect(lost).not.toHaveBeenCalled()
   })
 
-  it('answers false when another copy holds it', async () => {
-    await expect(onlyCopy(locksAnswering(false).locks)).resolves.toBe(false)
+  it('stops this copy once a newer one takes the lock away', async () => {
+    const lost = vi.fn()
+    const taken = Promise.reject(new DOMException('Lock broken by another request', 'AbortError'))
+    await takeOver(locksGranting(taken).locks, lost)
+    await vi.waitFor(() => expect(lost).toHaveBeenCalledTimes(1))
   })
 
   it('refuses when the lock cannot be asked for', async () => {
     const locks = { request: () => Promise.reject(new Error('locks unavailable')) } as unknown as LockManager
-    await expect(onlyCopy(locks)).rejects.toThrow('locks unavailable')
+    await expect(takeOver(locks, vi.fn())).rejects.toThrow('locks unavailable')
   })
 })
 

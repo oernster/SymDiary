@@ -1,15 +1,16 @@
 // The phone recorder's entry (Amendment 21). The form shows at once while Go
-// loads behind it (FR-100); a second copy starts nothing (FR-103).
+// loads behind it (FR-100); a newer copy takes over from an older one (FR-103).
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { said } from '../api'
 import { RecorderApp } from './RecorderApp'
-import { listenForInstall, onlyCopy, openElsewhere, startGo, type RecorderWindow } from './start'
+import { listenForInstall, startGo, takeOver, takenOver, type RecorderWindow } from './start'
 import '../theme.css'
 import '../styles.css'
 import '../lists.css'
 import '../dialogs.css'
+import './recorder.css'
 
 /** The service worker build-recorder.ps1 writes beside the page. */
 const workerScript = 'sw.js'
@@ -34,16 +35,12 @@ function stopped(view: ReactDOM.Root, text: string) {
 
 async function open(root: HTMLElement) {
   const view = ReactDOM.createRoot(root)
-  let alone: boolean
   try {
-    alone = await onlyCopy(navigator.locks)
+    // The copy just opened always shows the recorder; an older one stops (FR-103).
+    await takeOver(navigator.locks, () => stopped(view, takenOver))
   } catch (reason) {
     // Two copies writing one store could lose events, so not knowing is a stop.
     stopped(view, `The recorder could not check whether it is already open: ${said(reason)}.`)
-    return
-  }
-  if (!alone) {
-    stopped(view, openElsewhere)
     return
   }
   const loaded = settled(startGo(window as unknown as RecorderWindow))
