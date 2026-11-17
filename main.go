@@ -46,10 +46,6 @@ const (
 	windowMinHeight = 560
 )
 
-// problemLayout words a record that could not be opened (FR-062).
-const problemLayout = "Your record could not be opened, so nothing can be recorded " +
-	"until this is put right. Nothing in the file has been changed. %v"
-
 // systemClock is the real clock.
 type systemClock struct{}
 
@@ -73,7 +69,7 @@ func main() {
 	if err != nil {
 		// The window opens regardless and says what went wrong (house rule 1).
 		fmt.Fprintf(os.Stderr, "opening the record: %v\n", err)
-		problem = fmt.Sprintf(problemLayout, err)
+		problem = fmt.Sprintf(facade.ProblemLayout, err)
 		record = store.Unavailable{Reason: err}
 	}
 

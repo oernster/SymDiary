@@ -61,6 +61,27 @@ foreach ($target in 'linux', 'darwin') {
     Write-Host "  $target builds and vets clean."
 }
 
+# The phone recorder is the same rules compiled to WebAssembly (Amendment 21,
+# D-10), so a change it cannot run fails here the day it is written. Only the
+# packages the recorder pulls in are vetted: the desktop's SQLite library does
+# not build for js at all, which is why the phone keeps its own store.
+Write-Host 'Building the phone recorder for WebAssembly...'
+$env:GOOS = 'js'
+$env:GOARCH = 'wasm'
+try {
+    $module = go list -m
+    if ($LASTEXITCODE -ne 0) { throw "go list -m failed with exit code $LASTEXITCODE" }
+    $recorderPackages = go list -deps ./cmd/recorder | Where-Object { $_ -like "$module*" }
+    if ($LASTEXITCODE -ne 0) { throw "listing the recorder's packages failed with exit code $LASTEXITCODE" }
+    go build -o ([System.IO.Path]::GetTempPath()) ./cmd/recorder
+    if ($LASTEXITCODE -ne 0) { throw "the WebAssembly build failed with exit code $LASTEXITCODE" }
+    go vet $recorderPackages
+    if ($LASTEXITCODE -ne 0) { throw "go vet for WebAssembly failed with exit code $LASTEXITCODE" }
+} finally {
+    Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
+}
+Write-Host "  the recorder builds and vets clean ($($recorderPackages.Count) packages)."
+
 Write-Host 'Running staticcheck...'
 go run honnef.co/go/tools/cmd/staticcheck@latest $packages
 if ($LASTEXITCODE -ne 0) { throw "staticcheck failed with exit code $LASTEXITCODE" }

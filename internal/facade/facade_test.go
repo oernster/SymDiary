@@ -2,7 +2,6 @@ package facade
 
 import (
 	"errors"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +9,7 @@ import (
 	"github.com/oernster/symdiary/internal/application"
 	"github.com/oernster/symdiary/internal/domain"
 	"github.com/oernster/symdiary/internal/infrastructure/export"
-	"github.com/oernster/symdiary/internal/infrastructure/store"
+	"github.com/oernster/symdiary/internal/infrastructure/memstore"
 )
 
 // stoppedClock is a clock the test moves by hand.
@@ -28,14 +27,15 @@ func london(t *testing.T) *time.Location {
 	return zone
 }
 
-// facade answers a Core over a real record in a temporary folder.
+// facade answers a Core over a real record held in memory. It is the phone's
+// store, which keeps the same contract as the desktop's (storetest) and builds
+// for every platform, so these tests vet for WebAssembly too.
 func facade(t *testing.T) (*Core, *stoppedClock) {
 	t.Helper()
-	opened, err := store.Open(filepath.Join(t.TempDir(), "symdiary.db"))
+	opened, err := memstore.Open(&memorySnapshots{})
 	if err != nil {
 		t.Fatalf("opening the record: %v", err)
 	}
-	t.Cleanup(func() { _ = opened.Close() })
 	return facadeOver(t, opened)
 }
 
@@ -250,7 +250,7 @@ func TestRename(t *testing.T) {
 func TestEveryActionSaysWhyWhenTheRecordCannotBeRead(t *testing.T) {
 	t.Parallel()
 	reason := errors.New("the record could not be read")
-	app, _ := facadeOver(t, store.Unavailable{Reason: reason})
+	app, _ := facadeOver(t, application.Unavailable{Reason: reason})
 	calls := map[string]func() error{
 		"record": func() error { _, err := app.Record(RecordFormDTO{Symptom: "Tired"}); return err },
 		"history": func() error {

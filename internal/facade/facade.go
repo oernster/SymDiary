@@ -32,6 +32,11 @@ func Guard(err *error) {
 	}
 }
 
+// ProblemLayout words a record that could not be opened (FR-062). Every window
+// opens regardless and shows it, so it is written once, here.
+const ProblemLayout = "Your record could not be opened, so nothing can be recorded " +
+	"until this is put right. Nothing in the file has been changed. %v"
+
 // Services is what the facade drives: one application service per concern.
 type Services struct {
 	Recorder application.Recorder

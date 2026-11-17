@@ -92,6 +92,21 @@ export interface About {
   credits: Credit[]
 }
 
+/** What the phone recorder shows about its unsent events (FR-082). */
+export interface Waiting {
+  count: number
+  /** When the oldest unsent event was recorded; empty when nothing waits. */
+  oldest: string
+  hasBatch: boolean
+}
+
+/** One send, ready for the share sheet (FR-089). */
+export interface Parcel {
+  name: string
+  text: string
+  events: number[]
+}
+
 interface Bridge {
   State(): Promise<State>
   Now(): Promise<string>

@@ -41,6 +41,8 @@ var wireShapes = map[string]string{
 	"ImportResultDTO": "ImportResult",
 	"CreditDTO":       "Credit",
 	"AboutDTO":        "About",
+	"WaitingDTO":      "Waiting",
+	"ParcelDTO":       "Parcel",
 }
 
 var (

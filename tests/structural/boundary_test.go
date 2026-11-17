@@ -34,7 +34,11 @@ const frontendSource = "frontend/src"
 
 // compositionRoot names the files allowed to import both application and
 // infrastructure. main.go builds the adapters; nothing else may.
-var compositionRoot = map[string]bool{"main.go": true}
+var compositionRoot = map[string]bool{
+	"main.go": true,
+	// The phone recorder's, built for WebAssembly alone (Amendment 21).
+	"cmd/recorder/main.go": true,
+}
 
 // forbiddenInDomain names the packages that would make the domain impure.
 var forbiddenInDomain = []string{

@@ -29,6 +29,14 @@ var logWriters = map[string]int{
 	// A bound method panicked: the recovered value and the stack. Every window
 	// shares this guard (Amendment 21), so it lives with the facade.
 	"internal/facade/facade.go": 1,
+	// The phone recorder's error output is the browser's console, which is the
+	// phone's own. Its record could not be opened (an error); the page named no
+	// zone Go knows (a fixed sentence).
+	"cmd/recorder/main.go": 2,
+	// A bound method panicked on the phone: the recovered value and the stack.
+	"cmd/recorder/bridge.go": 1,
+	// Built for anything but a browser: a fixed sentence saying so.
+	"cmd/recorder/main_other.go": 1,
 	// The record could not be opened; the window could not be run. A path
 	// and an error each.
 	//
