@@ -1,9 +1,12 @@
 // The phone recorder's window (Amendment 21): the desktop's own recording form,
-// the phone's unsent count with Send plus the events the phone holds.
+// the phone's unsent count with Send plus the events the phone holds, which
+// can be corrected until they are sent (FR-086 to FR-088).
 
 import { useCallback, useEffect, useState } from 'react'
 import { api, said, type EventEntry, type State, type Waiting } from '../api'
+import { EventRows } from '../EventRows'
 import { RecordPane } from '../RecordPane'
+import { useDeletion } from '../useDeletion'
 import { InstallButton } from './InstallButton'
 import { SendPane } from './SendPane'
 import type { InstallOffers } from './start'
@@ -43,6 +46,8 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
     setWaiting(await api.waiting(setMessage))
     setEvents((await api.history(everything, setMessage)) ?? [])
   }, [])
+  // A sent event is refused by the rules themselves, in the words of FR-088.
+  const deletion = useDeletion(setMessage, setMessage, refresh)
 
   useEffect(() => {
     const problem = (text: string) =>
@@ -80,14 +85,10 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
       <SendPane waiting={waiting} refused={setMessage} tell={tell} changed={() => void refresh()} />
       <section className="pane" aria-labelledby="held-title">
         <h1 id="held-title">On this phone</h1>
-        <ul className="held">
-          {events.map((event) => (
-            <li key={event.id}>
-              {event.when} {event.symptom}
-            </li>
-          ))}
-        </ul>
+        <EventRows events={events} severities={state?.severities ?? []} refused={setMessage}
+          tell={setMessage} reload={refresh} askToDelete={(ids) => void deletion.ask(ids)} />
       </section>
+      {deletion.dialog}
     </main>
   )
 }

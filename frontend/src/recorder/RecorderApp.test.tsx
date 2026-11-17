@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { sentence } from '../api'
 import { aState, anEvent, installBridge } from '../bridge-fake'
 import { RecorderApp, notKept, notOffline, notStarted } from './RecorderApp'
 import type { InstallOffers } from './start'
@@ -85,6 +86,74 @@ describe('the phone recorder', () => {
   it('lists the events the phone holds', async () => {
     installBridge({ History: vi.fn(() => Promise.resolve([anEvent])) })
     renderApp()
-    expect(await screen.findByText(`${anEvent.when} ${anEvent.symptom}`)).toBeInTheDocument()
+    expect(await screen.findByText(anEvent.when)).toBeInTheDocument()
+    expect(screen.getByText(anEvent.note)).toBeInTheDocument()
+  })
+})
+
+describe('correcting on the phone', () => {
+  /** alreadySent is Go's refusal for an event the desktop holds (application.ErrAlreadySent). */
+  const alreadySent = 'this event has been sent to the desktop, so it is corrected there'
+
+  /** opened presses Edit on the only event, answering its editor; the recording form is beside it. */
+  async function opened(symptom: string) {
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    return screen.findByRole('form', { name: `Edit the ${symptom} event` })
+  }
+
+  it('edits an unsent event (FR-086)', async () => {
+    const corrected = { ...anEvent, note: 'Since lunch.' }
+    const bridge = installBridge({
+      History: vi.fn(() => Promise.resolve([anEvent])),
+      Edit: vi.fn(() => Promise.resolve(corrected)),
+    })
+    renderApp()
+    const editor = await opened(anEvent.symptom)
+    fireEvent.change(within(editor).getByLabelText('Note'), { target: { value: 'Since lunch.' } })
+    fireEvent.click(within(editor).getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(bridge.Edit).toHaveBeenCalledWith(anEvent.id, expect.objectContaining({ note: 'Since lunch.' })),
+    )
+    expect(await screen.findByText(`Saved the ${anEvent.symptom} event of ${anEvent.when}.`)).toBeInTheDocument()
+  })
+
+  it('asks before deleting an unsent event, naming it (FR-087)', async () => {
+    const prompt = `Delete the Tired event of ${anEvent.when}? This cannot be undone.`
+    const bridge = installBridge({
+      History: vi.fn(() => Promise.resolve([anEvent])),
+      DeletionPrompt: vi.fn(() => Promise.resolve(prompt)),
+      Delete: vi.fn(() => Promise.resolve()),
+    })
+    renderApp()
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(await screen.findByText(prompt)).toBeInTheDocument()
+    expect(bridge.Delete).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('alertdialog').querySelector('.danger') as HTMLElement)
+    await waitFor(() => expect(bridge.Delete).toHaveBeenCalledWith([anEvent.id]))
+    expect(await screen.findByText('Deleted 1 event.')).toBeInTheDocument()
+  })
+
+  it('refuses to delete a sent event before asking, saying where it is corrected (FR-088)', async () => {
+    installBridge({
+      History: vi.fn(() => Promise.resolve([anEvent])),
+      DeletionPrompt: vi.fn(() => Promise.reject(new Error(alreadySent))),
+    })
+    renderApp()
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(await screen.findByText(sentence(alreadySent))).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+
+  it('refuses to edit a sent event, keeping what was typed (FR-088)', async () => {
+    installBridge({
+      History: vi.fn(() => Promise.resolve([anEvent])),
+      Edit: vi.fn(() => Promise.reject(new Error(alreadySent))),
+    })
+    renderApp()
+    const editor = await opened(anEvent.symptom)
+    fireEvent.change(within(editor).getByLabelText('Note'), { target: { value: 'Since lunch.' } })
+    fireEvent.click(within(editor).getByRole('button', { name: 'Save' }))
+    expect(await screen.findByText(sentence(alreadySent))).toBeInTheDocument()
+    expect(within(editor).getByLabelText('Note')).toHaveValue('Since lunch.')
   })
 })

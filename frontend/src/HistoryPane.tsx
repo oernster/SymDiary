@@ -4,9 +4,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { api, type Definition, type EventEntry, type Filter, type Refused } from './api'
-import { ConfirmDialog } from './Dialog'
-import { EditRow } from './EditRow'
+import { EventRows } from './EventRows'
 import { notGiven } from './EventFields'
+import { useDeletion } from './useDeletion'
 import { counted } from './words'
 
 interface Props {
@@ -24,18 +24,11 @@ function toggled<T>(list: T[], item: T): T[] {
   return list.includes(item) ? list.filter((held) => held !== item) : [...list, item]
 }
 
-interface Pending {
-  prompt: string
-  ids: number[]
-}
-
 export function HistoryPane({ severities, refused, tell, revision }: Props) {
   const [filter, setFilter] = useState<Filter>(noFilter)
   const [symptoms, setSymptoms] = useState<Definition[]>([])
   const [events, setEvents] = useState<EventEntry[]>([])
   const [chosen, setChosen] = useState<number[]>([])
-  const [editing, setEditing] = useState<number | null>(null)
-  const [pending, setPending] = useState<Pending | null>(null)
 
   const load = useCallback(async () => {
     const [listed, held] = await Promise.all([
@@ -53,20 +46,7 @@ export function HistoryPane({ severities, refused, tell, revision }: Props) {
     void load()
   }, [load, revision])
 
-  const askToDelete = async (ids: number[]) => {
-    const prompt = await api.deletionPrompt(ids, refused)
-    if (prompt) setPending({ prompt, ids })
-  }
-
-  const confirmDelete = async () => {
-    if (!pending) return
-    const ids = pending.ids
-    setPending(null)
-    if (await api.remove(ids, refused)) {
-      tell(`Deleted ${counted(ids.length, 'event')}.`)
-      await load()
-    }
-  }
+  const deletion = useDeletion(refused, tell, load)
 
   return (
     <section className="pane history" aria-labelledby="history-title">
@@ -112,45 +92,15 @@ export function HistoryPane({ severities, refused, tell, revision }: Props) {
       <div className="list-head">
         <p>{counted(events.length, 'event')}</p>
         <button type="button" className="danger" disabled={chosen.length === 0}
-          onClick={() => askToDelete(chosen)}>
+          onClick={() => void deletion.ask(chosen)}>
           Delete chosen ({chosen.length})
         </button>
       </div>
 
-      <ul className="events">
-        {events.map((event) => (
-          <li key={event.id}>
-            {editing === event.id ? (
-              <EditRow event={event} severities={severities} refused={refused}
-                onCancel={() => setEditing(null)}
-                onSaved={(saved) => {
-                  setEditing(null)
-                  tell(`Saved the ${saved.symptom} event of ${saved.when}.`)
-                  void load()
-                }} />
-            ) : (
-              <div className="event">
-                <input type="checkbox" checked={chosen.includes(event.id)}
-                  aria-label={`Choose the ${event.symptom} event of ${event.when}`}
-                  onChange={() => setChosen(toggled(chosen, event.id))} />
-                <span className="when">{event.when}</span>
-                <span className="symptom">{event.symptom}</span>
-                <span className="severity">{event.severity}</span>
-                <span className="note">{event.note}</span>
-                <span className="row-actions">
-                  <button type="button" onClick={() => setEditing(event.id)}>Edit</button>
-                  <button type="button" onClick={() => askToDelete([event.id])}>Delete</button>
-                </span>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {pending && (
-        <ConfirmDialog text={pending.prompt} confirmLabel="Delete"
-          onConfirm={confirmDelete} onCancel={() => setPending(null)} />
-      )}
+      <EventRows events={events} severities={severities} refused={refused} tell={tell}
+        reload={load} askToDelete={(ids) => void deletion.ask(ids)}
+        choosing={{ chosen, toggle: (id) => setChosen(toggled(chosen, id)) }} />
+      {deletion.dialog}
     </section>
   )
 }
