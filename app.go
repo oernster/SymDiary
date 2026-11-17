@@ -110,7 +110,7 @@ type App struct {
 func newApp(services facade.Services, clock application.Clock, zone *time.Location,
 	version, problem string, chooser fileChooser, close func() error) *App {
 	return &App{
-		Core: facade.New(services, clock, zone, version, problem),
+		Core: facade.New(services, clock, zone, version, problem, application.DesktopCredits()),
 		zone: zone, clock: clock, services: services, chooser: chooser, close: close,
 	}
 }

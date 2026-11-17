@@ -77,7 +77,7 @@ One service per user-visible action, over the ports in `ports.go`.
 | `transfer.go` | Export; import too, skipping what is already held. |
 | `outbox.go` | The phone's sending: what is waiting, the file a send carries, the last batch again and marking a batch sent. |
 | `unavailable.go` | `Unavailable`, which stands in when the record could not be opened so that every action still answers. |
-| `about.go` | The About content and the credits. |
+| `about.go` | The About content, plus the credits of each build: the desktop's and the phone recorder's, each naming only the works it ships. |
 | `errors.go` | The refusals, each wrapped round the reason it happened. |
 
 ### Infrastructure: `internal/infrastructure`
@@ -137,8 +137,9 @@ The same domain and application, compiled to WebAssembly (Amendment 21).
 `browserstore`, builds the services and `facade.Outbox`, then `bridge.go` puts
 the facade where the page already looks for the desktop's
 (`window.go.main.App`), each method answering a promise. The page cannot tell
-the two windows apart, so the desktop's recording form and event rows run
-there unchanged. Go's clock in the browser is a fixed offset from start-up, so
+the two windows apart, so the desktop's recording form, event rows and About
+run there unchanged; each composition root hands the facade its own build's
+credits. Go's clock in the browser is a fixed offset from start-up, so
 the page names its time zone before Go starts and the binary carries the zone
 tables.
 

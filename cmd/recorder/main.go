@@ -16,7 +16,7 @@ import (
 	"syscall/js"
 	"time"
 
-	// The phone's browser offers Go no time-zone files, and without them
+	// The phone's browser offers Go no time-zone files; without them
 	// time.Local is a fixed offset from start-up, an hour out across summer
 	// time (measured 2026-11-17). The tables travel in the binary instead.
 	_ "time/tzdata"
@@ -78,7 +78,7 @@ func main() {
 		History:  application.NewHistory(held, zone),
 		Transfer: application.NewTransfer(held, export.File{}),
 	}
-	core := facade.New(services, clock, zone, appVersion, problem)
+	core := facade.New(services, clock, zone, appVersion, problem, application.PhoneCredits())
 	outbox := facade.NewOutbox(application.NewOutbox(held, held, export.File{}, clock, zone), zone)
 	install(core, outbox)
 

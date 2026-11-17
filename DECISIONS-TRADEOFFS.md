@@ -83,21 +83,22 @@ with a numbered amendment giving the reason.
 
 SymDiary's own code opens no connection, for any purpose. The rule is enforced
 by tests over the code and by the page's own security policy, not left as a
-promise. That includes the one feature most desktop applications reach for:
-nothing asks whether a newer release exists. The single fetch that can happen
-belongs to the window toolkit, on a Windows machine missing the component the
-window is drawn with (see the Windows 10 entry below). On the phone, the
-recorder's own service worker fetches the recorder's own files from the site so
-it can open offline; a send leaves the phone only through the app the person
-shares it to.
+promise. On the desktop that includes the one feature most applications reach
+for: nothing asks whether a newer release exists. The single fetch that can
+happen there belongs to the window toolkit, on a Windows machine missing the
+component the window is drawn with (see the Windows 10 entry below). On the
+phone, the recorder's service worker fetches the recorder's own files from the
+site, to open offline and to pick up a newer release; nothing from the record
+goes with it. A send leaves the phone only through the app the person shares it
+to.
 
 - **Rather than:** a promise that the network is used sparingly; a daily update
-  check.
+  check on the desktop.
 - **Gains:** no account, telemetry, advertising or analytics is possible
   without a test failing first; nothing from the record ever leaves the
   machine.
-- **Costs:** every feature that would need the network is ruled out; a person
-  finds a new release by visiting the site.
+- **Costs:** every feature that would need the network is ruled out; on the
+  desktop a person finds a new release by visiting the site.
 
 ### The Linux sandbox is given no network either
 

@@ -1,6 +1,6 @@
 // Package facade converts between the page's shapes and the application's.
 //
-// Both windows call it: the desktop's, through Wails, and the phone recorder's,
+// Both windows call it: the desktop's through Wails, the phone recorder's
 // through WebAssembly (Amendment 21, D-10). It owns nothing but the conversion;
 // every rule lives below it. What only one window can do (file dialogs, the
 // browser, the share sheet) stays with that window's own composition root.
@@ -51,15 +51,18 @@ type Core struct {
 	clock    application.Clock
 	version  string
 	problem  string
+	credits  []application.Credit
 	services Services
 }
 
 // New answers the shared facade. problem is the reason the record could not be
-// opened, empty when it opened; the page shows it (FR-062).
+// opened, empty when it opened; the page shows it (FR-062). credits are the
+// works this build ships, which its About names (FR-066, FR-106).
 func New(services Services, clock application.Clock, zone *time.Location,
-	version, problem string) *Core {
+	version, problem string, credits []application.Credit) *Core {
 	return &Core{
-		zone: zone, clock: clock, version: version, problem: problem, services: services,
+		zone: zone, clock: clock, version: version, problem: problem,
+		credits: credits, services: services,
 	}
 }
 
@@ -84,7 +87,7 @@ func (c *Core) Now() (now string, err error) {
 // About answers the About dialog.
 func (c *Core) About() (about AboutDTO, err error) {
 	defer Guard(&err)
-	return aboutDTO(application.NewAbout(c.version)), nil
+	return aboutDTO(application.NewAbout(c.version, c.credits)), nil
 }
 
 // occurrence reads an occurrence time from the page; nil when none was given.

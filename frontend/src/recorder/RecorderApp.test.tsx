@@ -31,6 +31,18 @@ afterEach(() => {
 })
 
 describe('the phone recorder', () => {
+  it('opens About and closes it again (FR-106)', async () => {
+    installBridge()
+    renderApp()
+    const about = screen.getByRole('button', { name: 'About' })
+    await waitFor(() => expect(about).toBeEnabled())
+    fireEvent.click(about)
+    expect(await screen.findByRole('heading', { name: 'SymDiary 1.0.0' })).toBeInTheDocument()
+    expect(screen.getByText('© Oliver Ernster 2026')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+
   it('takes typing but cannot record until Go has loaded (FR-100)', async () => {
     installBridge()
     const { loaded, settle } = opened()

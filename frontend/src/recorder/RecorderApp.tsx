@@ -3,7 +3,8 @@
 // can be corrected until they are sent (FR-086 to FR-088).
 
 import { useCallback, useEffect, useState } from 'react'
-import { api, said, type EventEntry, type State, type Waiting } from '../api'
+import { api, said, type About, type EventEntry, type State, type Waiting } from '../api'
+import { AboutDialog } from '../Dialog'
 import { EventRows } from '../EventRows'
 import { RecordPane } from '../RecordPane'
 import { useDeletion } from '../useDeletion'
@@ -41,6 +42,7 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
   const [message, setMessage] = useState('')
   const [problems, setProblems] = useState<string[]>([])
   const [kept, setKept] = useState(true)
+  const [about, setAbout] = useState<About | null>(null)
 
   const refresh = useCallback(async () => {
     setWaiting(await api.waiting(setMessage))
@@ -88,6 +90,14 @@ export function RecorderApp({ loaded, worker, offers }: Props) {
         <EventRows events={events} severities={state?.severities ?? []} refused={setMessage}
           tell={setMessage} reload={refresh} askToDelete={(ids) => void deletion.ask(ids)} />
       </section>
+      {/* The desktop's own About, naming the works this build ships (FR-106). */}
+      <div className="button-row">
+        <button type="button" disabled={!ready}
+          onClick={() => void api.about(setMessage).then((found) => found && setAbout(found))}>
+          About
+        </button>
+      </div>
+      {about && <AboutDialog about={about} onClose={() => setAbout(null)} />}
       {deletion.dialog}
     </main>
   )

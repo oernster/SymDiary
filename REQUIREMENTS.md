@@ -125,8 +125,8 @@ macOS is a signed and notarized DMG for Apple Silicon. Both have now been built
 on their own platform and run: the Flatpak's window opens and the DMG is
 notarized. The gate adds to that on every run by compiling and vetting the whole
 module for all three, which settles that nothing Windows-only can be written
-without the next run saying so. What each platform run did and did not settle is
-in TESTING.md.
+without the next run saying so. TESTING.md names the packages among what is
+checked by hand in a real build before a release.
 
 Where each platform keeps the two files it owns:
 
@@ -614,12 +614,15 @@ that does not resolve is a requirement nobody can check.
 - Requirement: The application shall offer an About dialog stating the
   product name, the version, the author, the copyright notice and the
   open-source works it is built with, each with its licence, plus the statement
-  in FR-067. The notice shall read `© Oliver Ernster 2026` (Amendment 8): the
-  symbol says it, so the word beside it says it twice.
+  in FR-067. Each build credits exactly the works it ships: the desktop
+  application its own, the phone recorder its own (FR-106). The notice shall
+  read `© Oliver Ernster 2026` (Amendment 8): the symbol says it, so the word
+  beside it says it twice.
 - Note: the year is the year of the first release, not the year the program is
   run in. A notice that follows the clock claims a date nothing was published
   on.
-- Verified by: `internal/application/about_test.go`;
+- Verified by: `internal/application/about_test.go`, including
+  `TestEachBuildCreditsWhatItShips`;
   `frontend/src/App.test.tsx::opens the Guide and About, then closes them again`
 
 **FR-068 Guide** (Amendment 5)
@@ -808,11 +811,10 @@ is worth doing if the history ever stops feeling immediate.
 
 **NFR-PERF-003 Receipt**: Saving a record as a PDF shall be prompt at the sizes
 a record reaches. Not instrumented, for the same reason as NFR-PERF-002: the
-earlier form named 2 s for over 1,000 events and nothing ever timed it. What has
-been read instead is the document itself, on each platform: see TESTING.md,
-where documents of one to three pages were written and looked right; the suite
-checks that a 120 event record runs to the pages its layout predicts
-(`sheet_test.go::TestALongRecordRunsToSeveralPages`) rather than timing it.
+earlier form named 2 s for over 1,000 events and nothing ever timed it. The
+suite checks that a 120 event record runs to the pages its layout predicts
+(`sheet_test.go::TestALongRecordRunsToSeveralPages`) rather than timing it; how
+a saved document reads is checked by hand before a release (TESTING.md).
 
 **NFR-PRIV-001 No network**: The application and the setup program shall open
 no network connection of their own. Verified by `tests/structural/boundary_test.go::TestNoNetworkImports`
@@ -863,8 +865,9 @@ Content-Security-Policy of `default-src 'self'`, `script-src 'self'
 'wasm-unsafe-eval'` and `connect-src 'none'`; the second is what lets the Go
 code compile (M-6) and grants no network access. The
 only fetches are the recorder's service worker collecting the recorder's own
-files from its site, when a version installs and for any file missing from its
-cache. Nothing from the record is involved. Verified by
+files from its site: when a version installs, for any file missing from its
+cache and when the recorder asks for a newer release on coming back on screen
+(FR-105). Nothing from the record is involved. Verified by
 `tests/structural/boundary_test.go::TestThePageOpensNoConnection`, which reads
 `frontend/recorder.html` for `default-src 'self'` and `connect-src 'none'`.
 
@@ -928,7 +931,7 @@ desktop reads it back (FR-093).
 | Reminders | Source 10: no nagging. |
 | Charts and trends | Source 10: no interpretation. |
 | Edit history (audit trail) | Source 13 allows one; left out of version 1 (Q-7). |
-| Update check | No network (NFR-PRIV-001). |
+| Update check on the desktop | No network (NFR-PRIV-001). The phone recorder updates itself from its own site (FR-105). |
 
 ### 3.10 Functional requirements: phone recorder (Amendment 21)
 
@@ -949,7 +952,7 @@ Decisions taken by the owner on 2026-11-16:
 | D-9 | The recorder shares a `.txt` file holding export format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json` (Q-17, M-4). |
 | D-10 | The recorder runs SymDiary's own Go domain and application, compiled to WebAssembly; the rules have one home (Q-12, M-6). |
 
-Priorities: 27 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
+Priorities: 28 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are the smallest recorder that records, keeps and hands over; the expensive parts (a PDF on the phone, two-way transfer, a live link) sit in 3.9.
 
 #### Recording on the phone
 
@@ -1123,6 +1126,18 @@ Priorities: 27 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   that fails with no signal"; the cache named from a digest of every shipped
   file by `build-recorder.ps1`; checked by hand on the phone across a release
 
+**FR-106 About on the phone**
+- Priority: Must
+- Requirement: The recorder shall offer an About button at the foot of its
+  page, opening the same About as the desktop's (FR-066, FR-067): the name, the
+  recorder's own version, the author, the copyright notice, the statement and
+  the open-source works the recorder ships, each with its licence.
+- Rationale: the recorder is a release of its own with its own version; the
+  person using it should be able to see which release they have, who made it,
+  that it gives no medical advice and what it is built with.
+- Verified by: `frontend/src/recorder/RecorderApp.test.tsx`, "opens About and
+  closes it again"; `internal/application/about_test.go::TestEachBuildCreditsWhatItShips`
+
 #### Correcting on the phone
 
 **FR-086 Edit before sending**
@@ -1245,7 +1260,7 @@ Priorities: 27 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
   first, saying that an event of that batch since corrected or deleted on the
   desktop comes back if the file is imported again.
 - Rationale: the desktop matches events by all five fields
-  (`internal/domain/event.go:47`), so the phone's original copy is a new event
+  (`domain.Observation` in `internal/domain/event.go`), so the phone's original copy is a new event
   to it once the desktop's copy has changed.
 - Verified by: `frontend/src/recorder/SendPane.test.tsx` "asks before sending the last batch again, naming the
   risk (FR-095, FR-096)"
@@ -1399,12 +1414,12 @@ Decided by the owner on 2026-11-16 (Amendment 21):
 
 | ID | Question | Decision | Owner |
 |---|---|---|---|
-| Q-11 | What does a send carry? | **Decided 2026-11-16 (D-6):** only the events not yet sent, plus `Send again` for the last batch. Reason, read from the source the same day: the desktop matches events by all five fields (`internal/domain/event.go:47`), so with D-2 a whole-record send after a desktop correction adds the phone's original copy back as a second event, while a deletion on the desktop is undone. The residual risk sits on `Send again` alone, which warns first (FR-096). Lives in FR-089, FR-095 to FR-097. | Oliver |
+| Q-11 | What does a send carry? | **Decided 2026-11-16 (D-6):** only the events not yet sent, plus `Send again` for the last batch. Reason, read from the source the same day: the desktop matches events by all five fields (`domain.Observation` in `internal/domain/event.go`), so with D-2 a whole-record send after a desktop correction adds the phone's original copy back as a second event, while a deletion on the desktop is undone. The residual risk sits on `Send again` alone, which warns first (FR-096). Lives in FR-089, FR-095 to FR-097. | Oliver |
 | Q-12 | One home for the recording rules: the Go domain compiled to WebAssembly versus a TypeScript copy held equal by shared case tables? | **Decided 2026-11-16 (D-10): the Go domain and application compiled to WebAssembly.** The house rule settles it: a second copy of the rules is a defect, not a trade-off. M-6 shows it works on the phone. Its 496 ms start becomes a constraint on the design: the form appears at once and Go loads behind it (FR-100). | Oliver |
 | Q-13 | Where is the recorder served from? | **Reopened 2026-11-16.** Answered "under symdiary.com", then a measurement contradicted it: every page of the site (`docs/index.html`, `features.html`, `why.html`, `download.html`) loads GoatCounter's `count.js` from `gc.zgo.at`. Browser storage belongs to an origin rather than a path (general platform knowledge, not measured here), so a recorder at `symdiary.com/recorder/` shares its events with pages running a third-party script, which NFR-PRIV-005 forbids. **Decided 2026-11-17: `symdiary.com/app/`, with GoatCounter removed from the site** (Oliver's ruling: the recorder holds personal data). One repository on GitHub Pages alone rules out a subdomain: GitHub's documentation gives a Pages site one custom domain and lists an apex domain paired with a custom subdomain as unsupported. | Oliver |
 | Q-14 | Minimum phone versions? | **Decided 2026-11-17: no browser floor.** Any Android browser passing the recorder's own check (FR-104) is supported; the site names no browser as a requirement. Chrome 157 is the one seen working end to end. Supersedes the 2026-11-16 answer of Chrome 157. | Oliver |
 | Q-15 | Does a phone recorder change 4.1's MHRA reading? | **Decided 2026-11-16:** no. The intended purpose is unchanged (a written symptom diary's replacement, MHRA v1.10f page 21). The standing rules carry over: no store listing, no health category, nothing that enhances the data presented. | Oliver |
-| Q-17 | Chrome on Android shares `.txt` but not `.json` (M-4). How does the file reach the desktop? | **Decided 2026-11-16 (D-9): share as `.txt`.** Lives in FR-094, FR-098, FR-099. As proposed: the recorder shares `SymDiary-phone-<date>-<time>.txt` holding format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json`. The reader already decides by contents (the `format` and `version` envelope), so a `.txt` that is not a SymDiary record is refused as any foreign file is. Cost: a desktop change, plus a name that no longer says what the file holds, which the desktop has avoided before (`app.go:25`). Alternative: keep `.json` through `Download the file instead` only, leaving the user to move it from the phone's Downloads folder by hand. | Oliver |
+| Q-17 | Chrome on Android shares `.txt` but not `.json` (M-4). How does the file reach the desktop? | **Decided 2026-11-16 (D-9): share as `.txt`.** Lives in FR-094, FR-098, FR-099. As proposed: the recorder shares `SymDiary-phone-<date>-<time>.txt` holding format version 1 unchanged; the desktop's Import dialog lists `*.txt` beside `*.json`. The reader already decides by contents (the `format` and `version` envelope), so a `.txt` that is not a SymDiary record is refused as any foreign file is. Cost: a desktop change, plus a name that no longer says what the file holds, which the desktop has avoided before (`fileKind` in `app.go`). Alternative: keep `.json` through `Download the file instead` only, leaving the user to move it from the phone's Downloads folder by hand. | Oliver |
 | Q-16 | Same repository or a new one? | **Decided 2026-11-16:** the same. FR-093 and NFR-MAINT-007 tie the two sides together, so one gate sees both. | Oliver |
 
 ### Appendix C: Build order
@@ -1433,6 +1448,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 25 | 2026-11-17 | FR-066, new FR-106 | The recorder carries an About of its own. Each build's About credits exactly what that build ships; the desktop's adds the PDF library (go-pdf/fpdf) and the Go fonts it draws the sheet with. | Owner's request for the phone. Measured against `go.mod` and the imports: since the PDF arrived (Amendment 16), the desktop has shipped `github.com/go-pdf/fpdf` and the Go fonts from `golang.org/x/image` while its About named neither. The desktop list would also have credited Wails and SQLite on a phone that ships neither. |
 | 24 | 2026-11-17 | New FR-105 | An installed recorder updates itself: it asks for a newer release whenever it comes back on screen and reloads into one once it has taken over, at once when off screen, otherwise on the user's next return. Its offline cache is named from a digest of every shipped file as well as VERSION. | Owner's ruling: a user will never know to pull the page down. Measured in the preview: the first load after a rebuild still ran the previous bundle, the next load the new one. Read in the build script: a rebuild under the same VERSION that changed only the rules would have left `sw.js` byte for byte the same, so no phone would have seen it. |
 | 23 | 2026-11-17 | 2.3, NFR-PORT-001, Q-14, new FR-104 | The recorder no longer requires Chrome. It checks on opening for each thing it needs; where the browser lacks any, it starts nothing and names what is missing. | Owner's ruling: a product cannot force a browser on people. Only Chrome 157 was ever measured, which made it the stated requirement; the check moves that judgement onto each phone, so a browser nobody here has tried is told plainly whether it can run the recorder. |
 | 22 | 2026-11-17 | FR-103 | A copy of the recorder that a newer one paused reloads itself when the user comes back to it, taking the recorder back; while paused it offers a Reload button. | Owner's report from the phone: reopening the app showed the paused copy's message again. Only pulling the page down to reload brought the recorder back; nothing told the user so. Measured by the owner: a reload restores it. The page now does that reload itself the moment it is back on screen. |

@@ -50,7 +50,7 @@ func facadeOver(t *testing.T, record application.Store) (*Core, *stoppedClock) {
 		History:  application.NewHistory(record, zone),
 		Transfer: application.NewTransfer(record, export.File{}),
 	}
-	return New(services, clock, zone, "1.2.3", ""), clock
+	return New(services, clock, zone, "1.2.3", "", application.PhoneCredits()), clock
 }
 
 // record records one symptom, failing the test where it is refused.
@@ -77,8 +77,8 @@ func TestStateAndAbout(t *testing.T) {
 		t.Errorf("severities = %v", state.Severities)
 	}
 	about, err := app.About()
-	if err != nil || about.Version != "1.2.3" || len(about.Credits) == 0 {
-		t.Errorf("about = %+v, %v", about, err)
+	if err != nil || about.Version != "1.2.3" || len(about.Credits) != len(application.PhoneCredits()) {
+		t.Errorf("about = %+v, %v; want the credits it was built with", about, err)
 	}
 	now, err := app.Now()
 	if err != nil || now != "2026-09-22T17:12" {
