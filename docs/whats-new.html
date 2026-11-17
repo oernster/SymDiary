@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>What's new in SymDiary: release history</title>
+<meta name="description" content="SymDiary's release history: a phone app that keeps itself up to date, a recorder for Android phones, a PDF that keeps every word of a long note, the record since your last appointment, Windows 10 support and the first release."/>
+<link rel="canonical" href="https://symdiary.com/whats-new.html"/>
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="SymDiary"/>
+<meta property="og:title" content="What's new in SymDiary: release history"/>
+<meta property="og:description" content="A phone app that keeps itself up to date, a recorder for Android phones, a PDF that keeps every word of a long note, the record since your last appointment, Windows 10 support and the first release."/>
+<meta property="og:url" content="https://symdiary.com/whats-new.html"/>
+<meta property="og:image" content="https://symdiary.com/application-icon.png"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="1254"/>
+<meta property="og:image:height" content="1254"/>
+<meta property="og:image:alt" content="SymDiary app icon"/>
+<meta property="og:locale" content="en_GB"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="What's new in SymDiary: release history"/>
+<meta name="twitter:description" content="A phone app that keeps itself up to date, a recorder for Android phones, a PDF that keeps every word of a long note, the record since your last appointment, Windows 10 support and the first release."/>
+<meta name="twitter:image" content="https://symdiary.com/application-icon.png"/>
+<meta name="twitter:image:alt" content="SymDiary app icon"/>
+<link rel="icon" href="application-icon.png"/>
+<link rel="stylesheet" href="styles.css?v=499f821a9f"/>
+</head>
+<body>
+
+<header class="bar">
+    <div class="wrap">
+        <a class="mark" href="./"><img src="application-icon.png" alt=""/>SymDiary</a>
+        <nav>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a class="hide-small" href="whats-new.html">What's New</a>
+            <a href="download.html">Get it</a>
+            <button type="button" class="toggle" id="theme-toggle" title="Change the appearance">
+                <img id="theme-face" src="light-mode.png" alt="Switch to light mode"/>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<main>
+
+<section id="whats-new">
+    <div class="wrap">
+        <div class="eyebrow">Changelog</div>
+        <h2>What's new</h2>
+        <p class="intro">Recent releases have taken SymDiary off the desk and onto your
+            phone: an Android recorder that works with no signal, hands its events to
+            your computer as a file and now keeps itself up to date. Before that, the
+            PDF learned to keep every word of a long note, the Receipt screen gained
+            your last appointment as a starting point and Windows 10 joined
+            Windows 11.</p>
+
+        <div class="changelog">
+
+            <div class="card">
+                <div class="ver-tag">v1.4.1</div>
+                <h3>The phone app keeps itself up to date</h3>
+                <ul class="plain-list">
+                    <li>Each time you come back to the Android app it checks quietly for a newer version and fetches it in the background. It changes over only while it is out of sight, so nothing you are typing is ever swapped away; with no signal it simply tries again next time</li>
+                    <li>Phones still running 1.4.0 need one last reload to pick this up: open the app and pull the page down once. After that, updates arrive by themselves</li>
+                    <li>The phone app could refuse to open in Chrome, saying the browser lacked file sharing. The check asked the wrong question; it now only looks for whether file sharing exists. Whether your file can be shared is still checked when you press Send</li>
+                    <li>The phone app has an About button at the foot of its page: the version you have, who made it, that it gives no medical advice and the open-source works it is built with</li>
+                    <li>About on the desktop now credits the PDF library and the Go fonts the symptom record is drawn with</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="ver-tag">v1.4.0</div>
+                <h3>SymDiary on your Android phone</h3>
+                <ul class="plain-list">
+                    <li>Symptoms are noticed away from the desk. Open symdiary.com/app in Chrome and tap Install SymDiary; it then opens from its own icon on your home screen</li>
+                    <li>It uses the desktop's recording form and rules, so a symptom is matched to one you already use and a time in the future is refused</li>
+                    <li>It records with no signal at all: once installed it keeps its own copy, so a symptom noticed on a train is recorded there and then</li>
+                    <li>Events stay on the phone until you send them. Until then you can correct or delete them, with SymDiary asking first; the phone shows how many are waiting and when the oldest happened</li>
+                    <li>Send hands the waiting events to your computer as a file through the phone's own share panel. On the desktop, Import reads it and skips anything it already holds. Only events not yet sent go, so an older copy from the phone never undoes a correction made on the desktop. Send again repeats the last file if it went astray</li>
+                    <li>Nothing leaves the phone any other way: no account, no server and no sync. The phone's events are not encrypted; they are protected by the phone's lock</li>
+                    <li>Opening SymDiary a second time hands over to the copy you just opened, so the two can never write over each other</li>
+                    <li>The desktop's Import lists the phone's .txt files beside the usual .json exports. A file that is not a SymDiary record is refused by name</li>
+                    <li>The website no longer loads a visitor counter or any other script from elsewhere, since the phone recorder keeps your symptoms in your browser's storage for symdiary.com. A test keeps it that way</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="ver-tag">v1.3.0</div>
+                <h3>A PDF that keeps every word</h3>
+                <ul class="plain-list">
+                    <li>A note too long for one page ran off its foot, so the end never reached the PDF while Save PDF said the document was saved. It now continues onto the next page, which opens with the event's time again. An event that fits on a page is still never split</li>
+                    <li>The PDF keeps your line breaks, so a note written as a list prints as one</li>
+                    <li>A long run of characters with no space in it, such as a web address, now breaks at the edge of the sheet instead of running off the side</li>
+                    <li>The PDF covers Latin, Greek and Cyrillic. Characters outside it used to print as empty boxes; Save PDF now names them before asking where to save</li>
+                    <li>An import now shows on screen as soon as it finishes, instead of leaving the old view in place</li>
+                    <li>An export file holding a blank symptom name is refused on import</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="ver-tag">v1.2.0</div>
+                <h3>Since your last appointment</h3>
+                <ul class="plain-list">
+                    <li>Mark the date of your last appointment on the Receipt screen and it opens on the record from that day to today, with Custom dates beside it for any other range</li>
+                    <li>When the dates you choose take in that appointment, the sheet says so under the date range, so whoever reads it can see at once what is new. SymDiary itself compares nothing; untick Show on the sheet to keep the date off paper</li>
+                    <li>The date is kept by the window, as the light or dark choice is. It is not part of your record and is not exported; only the most recent is held and nothing ever asks you to mark one</li>
+                    <li>Once the record is showing, it follows every change of dates on its own, so what you see is what you save</li>
+                    <li>The Guide now names the one network exception the site already stated: on a Windows computer missing Microsoft's WebView2, SymDiary asks before fetching its installer. It also says your record is protected by the account you sign in to, since SymDiary runs on macOS and Linux too</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="ver-tag">v1.1.0</div>
+                <h3>Windows 10 as well as Windows 11; a page for each part of the site</h3>
+                <ul class="plain-list">
+                    <li>SymDiary now supports 64-bit Windows 10 as well as Windows 11. Where Microsoft's WebView2 is missing or too old, SymDiary and its setup program say so before opening and offer to install it. Decline and the program does not open</li>
+                    <li>That download is the one network connection ever made on SymDiary's behalf. Nothing from your record is involved; the README and the site now say so plainly</li>
+                    <li>This route had not yet been tried on a Windows 10 machine when it shipped</li>
+                    <li>The site is four pages instead of one long scroll: Home, Features, Why and Get it. Each links its stylesheet and script by their content, so a browser never pairs a new page with an old cached stylesheet</li>
+                    <li>One statement on the site was corrected: the sheet shows the time each symptom happened, not the time it was written down</li>
+                    <li>A new document in the repository, DECISIONS-TRADEOFFS.md, sets out the deliberate choices SymDiary rests on and what each one costs</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="ver-tag">v1.0.0</div>
+                <h3>The first release</h3>
+                <ul class="plain-list">
+                    <li>Record a symptom in a few seconds: type what you noticed, optionally choose a severity and add a note, then press Record now. The time is filled in for you</li>
+                    <li>What you type is kept exactly as typed. A symptom you name once is offered back next time, matched however you capitalise it; an occurrence cannot be dated in the future</li>
+                    <li>The history lists your events newest first, filtered by date range, symptom and severity. It shows events and counts: no trend, no average, no score and no chart</li>
+                    <li>Events can be corrected or deleted; a deletion names what will go before it goes. A symptom can be renamed and every event using it follows</li>
+                    <li>Choose a date range and SymDiary draws a PDF to take to an appointment. Every page says which page it is; the sheet names the program and states plainly that the record is not a diagnosis. It carries nothing you did not record</li>
+                    <li>The whole record exports to a JSON file you own and reads back in, skipping anything already held</li>
+                    <li>The record is one SQLite file in the folder your platform keeps a program's configuration in. The log never holds any part of it</li>
+                    <li>It opens dark, with a button that moves it to light and remembers your choice. Every action can be reached from the keyboard; a Guide names every control</li>
+                    <li>A one-file Windows setup program needs no administrator rights and keeps your record on uninstall unless you tick the box that names it. Linux has a Flatpak; macOS has a signed and notarized disk image for Apple Silicon</li>
+                    <li>It opens no network connection at all: no account, no cloud, no sync, no advertising and no telemetry. It does not diagnose or suggest what a symptom might mean</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <p class="changelog-more">
+            <a class="button plain" href="https://github.com/oernster/SymDiary/releases">View all releases on GitHub</a>
+        </p>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <div class="links">
+            <a href="./">Home</a>
+            <a href="features.html">Features</a>
+            <a href="why.html">Why</a>
+            <a href="whats-new.html">What's New</a>
+            <a href="download.html">Get it</a>
+            <a href="https://github.com/oernster/SymDiary">Source on GitHub</a>
+            <a href="https://github.com/oernster/SymDiary/blob/main/LICENSE">Licence</a>
+            <a href="https://ernster.dev/commercial-licensing.html">Commercial licensing</a>
+            <a href="https://ernster.dev">More of my work</a>
+        </div>
+        <p>SymDiary is free software under the GNU General Public Licence, version 3.
+            You may use it, study it, share it and change it; anything you pass on
+            carries the same freedoms.</p>
+        <p>SymDiary records what you type and gives it back to you. It does not
+            diagnose and it makes no claim about what your notes mean.</p>
+        <p>&#169; Oliver Ernster</p>
+    </div>
+</footer>
+
+<script src="site.js?v=52470ecff2"></script>
+</body>
+</html>
