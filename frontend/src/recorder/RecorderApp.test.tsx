@@ -134,7 +134,7 @@ describe('correcting on the phone', () => {
     await waitFor(() =>
       expect(bridge.Edit).toHaveBeenCalledWith(anEvent.id, expect.objectContaining({ note: 'Since lunch.' })),
     )
-    expect(await screen.findByText(`Saved the ${anEvent.symptom} event of ${anEvent.when}.`)).toBeInTheDocument()
+    expect(await screen.findByText(`Saved the ${anEvent.symptom} event of ${anEvent.when}.`, { selector: '[role=status]' })).toBeInTheDocument()
   })
 
   it('asks before deleting an unsent event, naming it (FR-087)', async () => {
@@ -150,7 +150,7 @@ describe('correcting on the phone', () => {
     expect(bridge.Delete).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('alertdialog').querySelector('.danger') as HTMLElement)
     await waitFor(() => expect(bridge.Delete).toHaveBeenCalledWith([anEvent.id]))
-    expect(await screen.findByText('Deleted 1 event.')).toBeInTheDocument()
+    expect(await screen.findByText('Deleted 1 event.', { selector: '[role=status]' })).toBeInTheDocument()
   })
 
   it('refuses to delete a sent event before asking, saying where it is corrected (FR-088)', async () => {
@@ -160,7 +160,9 @@ describe('correcting on the phone', () => {
     })
     renderApp()
     fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
-    expect(await screen.findByText(sentence(alreadySent))).toBeInTheDocument()
+    expect(await screen.findByRole('status')).toHaveTextContent(sentence(alreadySent))
+    // Flashed at the foot as well, where the reader who pressed Delete is looking (FR-107).
+    expect(screen.getByTestId('flash')).toHaveTextContent(sentence(alreadySent))
     expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 
@@ -173,7 +175,7 @@ describe('correcting on the phone', () => {
     const editor = await opened(anEvent.symptom)
     fireEvent.change(within(editor).getByLabelText('Note'), { target: { value: 'Since lunch.' } })
     fireEvent.click(within(editor).getByRole('button', { name: 'Save' }))
-    expect(await screen.findByText(sentence(alreadySent))).toBeInTheDocument()
+    expect(await screen.findByText(sentence(alreadySent), { selector: '[role=status]' })).toBeInTheDocument()
     expect(within(editor).getByLabelText('Note')).toHaveValue('Since lunch.')
   })
 })

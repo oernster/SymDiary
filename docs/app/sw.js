@@ -6,8 +6,8 @@
 // any change makes this file differ and the phone installs it (FR-105); the list
 // is every file it shipped. A new worker takes over at once; the page reloads
 // itself to follow it (frontend/src/recorder/update.ts).
-const CACHE = "symdiary-recorder-1.4.1-d01427814339";
-const FILES = ["./", "assets/application-icon-1EQn0oGa.png", "assets/recorder-BMIb2EeW.css", "assets/recorder-Dv97V3de.js", "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "symdiary-wasm.js", "wasm_exec.js"];
+const CACHE = "symdiary-recorder-1.4.1-bace2f85c7a5";
+const FILES = ["./", "assets/application-icon-1EQn0oGa.png", "assets/recorder-Bl7msJwK.js", "assets/recorder-CQoxleON.css", "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "symdiary-wasm.js", "wasm_exec.js"];
 
 self.addEventListener("install", (event) => {
   // cache: "reload" skips the HTTP cache, so a new version never keeps old files.

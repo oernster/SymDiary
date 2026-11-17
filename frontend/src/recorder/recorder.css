@@ -51,3 +51,21 @@
 .recorder .event .row-actions {
   flex-basis: 100%;
 }
+
+/*
+  A message flashed at the foot of the screen wherever the page is scrolled
+  (FR-107), in the accent pair the colour test already holds to AA, so it
+  stands apart from the page. It takes no taps, so nothing under it is lost
+  while it shows; it clears the phone's own bottom edge.
+*/
+.flash {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  pointer-events: none;
+}

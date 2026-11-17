@@ -149,7 +149,9 @@ it (FR-104); no browser is required by name. The form shows at once while
 Go loads behind it (FR-100); the copy just opened takes a Web Lock from any
 older copy, which pauses and reloads itself once it is back on screen
 (FR-103); Send hands the file to the share panel and
-marks events sent only once the share completes. Updates need nothing from the
+marks events sent only once the share completes. Every message is shown at the
+top of the page and flashed in `Flash.tsx`, a strip fixed to the foot of the
+screen, so it is seen wherever the page is scrolled (FR-107). Updates need nothing from the
 user (FR-105): `update.ts` asks for a newer release whenever the page comes back
 on screen and reloads into one once its worker has taken over, at once off
 screen, otherwise on the next return. `build-recorder.ps1` builds it into
