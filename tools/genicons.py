@@ -11,7 +11,8 @@ treated the same way.
 The application icon: assets/application-icon.png becomes the multi-size Windows
 .ico that wails build puts on the executable, which is where the taskbar button
 and the shortcuts take theirs. It is also written as build/appicon.png, since
-wails build writes its own logo there when the file is absent.
+wails build writes its own logo there when the file is absent. The phone
+recorder's home screen icons are written to build/recorder/.
 
 Run it when a master changes:
 
@@ -93,6 +94,13 @@ SETUP_DIST = REPO / "installer" / "frontend" / "dist"
 LINUX_ICONS = BUILD / "linux" / "icons"
 LINUX_ICON_LAYOUT = "symdiary_{size}.png"
 
+# The phone recorder's manifest names these icons; build-recorder.ps1 copies
+# them beside the page. RECORDER_SIZES are the two sizes Chrome on Android asks a
+# manifest for before it will offer to install: the home screen and the splash.
+RECORDER = BUILD / "recorder"
+RECORDER_SIZES = [192, 512]
+RECORDER_ICON_LAYOUT = "icon-{size}.png"
+
 
 def trimmed(master: pathlib.Path) -> Image.Image:
     """Open a master and crop away the transparent margin around its artwork."""
@@ -139,6 +147,16 @@ def mark(master: pathlib.Path, target: pathlib.Path) -> int:
     return target.stat().st_size
 
 
+def recorder_icons() -> None:
+    """Write the phone recorder's home screen icons from the application icon."""
+    square = squared(trimmed(MASTERS / APP_MASTER))
+    RECORDER.mkdir(parents=True, exist_ok=True)
+    for size in RECORDER_SIZES:
+        target = RECORDER / RECORDER_ICON_LAYOUT.format(size=size)
+        square.resize((size, size), Image.LANCZOS).save(target, "PNG", optimize=True)
+        print(f"{'':<22} -> {target.relative_to(REPO)} ({target.stat().st_size:,} bytes)")
+
+
 def main() -> int:
     masters = sorted(p for p in MASTERS.glob("*.png") if p.name != APP_MASTER)
     if not masters:
@@ -178,6 +196,7 @@ def main() -> int:
     print(f"{'':<22} -> {SETUP_HEADER.relative_to(REPO)} ({SETUP_HEADER.stat().st_size:,} bytes)")
     written = render(app, OUTPUT / APP_MASTER)
     print(f"{'':<22} -> About crest ({written:,} bytes)")
+    recorder_icons()
 
     for name in TOGGLE_MASTERS:
         master = MASTERS / name

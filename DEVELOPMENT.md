@@ -84,6 +84,34 @@ opens; the DMG builds and is notarized. What the gate adds on every run is
 that the module compiles and vets for both, so nothing Windows-only can be
 written without the next test run saying so.
 
+### The phone recorder
+
+```powershell
+./build-recorder.ps1
+```
+
+In order, it:
+
+1. Reads `VERSION`.
+2. Runs `test.ps1` and stops on failure, unless `-Fast` was given.
+3. Builds `./cmd/recorder` for `js/wasm` with the same version flag.
+4. Builds the page with `npm --prefix frontend run build:recorder`.
+5. Collects `dist-recorder/`: the page as `index.html`, the rules as
+   `symdiary-wasm.js` (base64, because the page's `connect-src 'none'` forbids
+   fetching a `.wasm` file), Go's own `wasm_exec.js`, the icons and the
+   manifest from `build/recorder/`, with the manifest's colour read from
+   `--bg` in `theme.css`.
+6. Writes `sw.js`, listing every file it shipped under a cache named from
+   `VERSION`, so the recorder opens offline.
+
+`dist-recorder/` is the whole site. To try it, serve it on localhost, which the
+browser treats as secure enough for the service worker and the single copy
+lock:
+
+```powershell
+python -m http.server 8768 --directory dist-recorder
+```
+
 ## Running from source
 
 ```powershell
@@ -113,7 +141,8 @@ python tools/genicons.py
 It writes the band icons into `frontend/src/assets/icons`, the multi-size
 `build/windows/icon.ico` that Wails puts on the executable, plus `build/appicon.png`, which Wails fills with its own logo when the file is
 absent, plus `build/linux/icons`, the eight hicolor sizes a Linux desktop
-chooses between, which the Flatpak manifest installs one by one. The output is
+chooses between, which the Flatpak manifest installs one by one, plus the phone
+recorder's two home screen icons in `build/recorder/`. The output is
 committed, so a clone needs neither Python nor Pillow; the Flatpak build needs
 no Python inside its sandbox either.
 
