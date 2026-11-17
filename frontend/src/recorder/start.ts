@@ -4,7 +4,7 @@
 /** The Web Locks name every copy of the recorder asks for. */
 export const lockName = 'symdiary-recorder'
 
-/** Said by a second copy, which starts nothing so only one copy writes the phone's events. */
+/** Said by a second copy, which starts nothing so only one copy writes the phone's events (FR-103). */
 export const openElsewhere =
   'SymDiary is already open on this phone in another tab or window. Use that one: this copy has not started, so the two cannot write over each other.'
 
