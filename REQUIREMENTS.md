@@ -1094,17 +1094,21 @@ Priorities: 28 Must, 1 Should (FR-094), 2 Could (FR-084, FR-085). The Musts are 
 **FR-104 The recorder checks its browser**
 - Priority: Must
 - Requirement: When the recorder opens in a browser lacking WebAssembly,
-  IndexedDB, service workers, Web Locks or the ability to share a `.txt` file,
-  it shall start nothing and shall say that this browser cannot run it, naming
-  each thing missing and what it is for.
+  IndexedDB, service workers, Web Locks or file sharing (`navigator.share` with
+  `navigator.canShare`), it shall start nothing and shall say that this browser
+  cannot run it, naming each thing missing and what it is for. Each is checked
+  for being there, never by asking the browser a question about a made-up
+  file; whether the real file can be shared is asked when Send is pressed
+  (Amendment 26).
 - Rationale: no browser is required by name (Oliver's ruling), so the check
   happens on the phone itself. Recording events a browser could not keep or
   send would lose them.
 - Verified by: `frontend/src/recorder/capabilities.test.ts`, "finds nothing
   missing in a browser that has everything", "names only %s when it is missing"
-  for each need, "counts sharing as missing when the browser says it
-  cannot share a file" and "says the browser cannot run the recorder and names
-  everything it lacks"
+  for each need, "never asks whether a file can be shared, only whether sharing
+  exists", "counts sharing as missing when the browser offers no way to ask" and
+  "says the browser cannot run the recorder and names everything it lacks"; the
+  recorder seen opening on the owner's phone after Amendment 26
 
 **FR-105 Updates arrive by themselves**
 - Priority: Must
@@ -1448,6 +1452,7 @@ The phone recorder (Amendment 21), in the same order:
 
 | No. | Date | Requirement | Change | Reason |
 |---|---|---|---|---|
+| 26 | 2026-11-17 | FR-104, FR-105 | The browser check looks only for whether file sharing exists; it no longer asks `canShare` about a made-up file. The recorder registers its update watcher before any check that can stop it. | A defect the owner found on the phone: the recorder refused to start, saying the browser lacked file sharing, on the phone where Send had shared a file that same morning. Send needs both functions, so the browser had them; the check's answer about its made-up empty file was the part that failed. Why that answer came back false is not measured. A stopped page also never registered its update watcher, so it could not take up a fix by itself. |
 | 25 | 2026-11-17 | FR-066, new FR-106 | The recorder carries an About of its own. Each build's About credits exactly what that build ships; the desktop's adds the PDF library (go-pdf/fpdf) and the Go fonts it draws the sheet with. | Owner's request for the phone. Measured against `go.mod` and the imports: since the PDF arrived (Amendment 16), the desktop has shipped `github.com/go-pdf/fpdf` and the Go fonts from `golang.org/x/image` while its About named neither. The desktop list would also have credited Wails and SQLite on a phone that ships neither. |
 | 24 | 2026-11-17 | New FR-105 | An installed recorder updates itself: it asks for a newer release whenever it comes back on screen and reloads into one once it has taken over, at once when off screen, otherwise on the user's next return. Its offline cache is named from a digest of every shipped file as well as VERSION. | Owner's ruling: a user will never know to pull the page down. Measured in the preview: the first load after a rebuild still ran the previous bundle, the next load the new one. Read in the build script: a rebuild under the same VERSION that changed only the rules would have left `sw.js` byte for byte the same, so no phone would have seen it. |
 | 23 | 2026-11-17 | 2.3, NFR-PORT-001, Q-14, new FR-104 | The recorder no longer requires Chrome. It checks on opening for each thing it needs; where the browser lacks any, it starts nothing and names what is missing. | Owner's ruling: a product cannot force a browser on people. Only Chrome 157 was ever measured, which made it the stated requirement; the check moves that judgement onto each phone, so a browser nobody here has tried is told plainly whether it can run the recorder. |

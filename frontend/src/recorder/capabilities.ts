@@ -24,15 +24,14 @@ interface Need {
   present: (browser: Browser) => boolean
 }
 
-/** canShareAFile asks whether a file of the kind Send shares could be shared. */
-function canShareAFile(browser: Browser): boolean {
-  const { share, canShare } = browser.navigator
-  if (!share || !canShare) return false
-  try {
-    return canShare({ files: [new File([''], 'SymDiary.txt', { type: shareType })] })
-  } catch {
-    return false
-  }
+/**
+ * canShareFiles answers whether the browser offers file sharing at all. It
+ * never asks canShare about a made-up file: on a phone where Send works, that
+ * answer came back false and stopped the recorder (Amendment 26). Send asks
+ * about the real file when it is pressed and says so if it cannot be shared.
+ */
+function canShareFiles(browser: Browser): boolean {
+  return browser.navigator.share !== undefined && browser.navigator.canShare !== undefined
 }
 
 /** Every need, in the order the recorder meets them. */
@@ -41,7 +40,7 @@ export const needs: readonly Need[] = [
   { said: 'IndexedDB, to keep your events on the phone', present: (b) => b.indexedDB !== undefined },
   { said: 'service workers, to open without a signal', present: (b) => b.navigator.serviceWorker !== undefined },
   { said: 'Web Locks, so only one copy writes at a time', present: (b) => b.navigator.locks !== undefined },
-  { said: 'file sharing, to send your events to your computer', present: canShareAFile },
+  { said: 'file sharing, to send your events to your computer', present: canShareFiles },
 ]
 
 /** missing answers, in plain words, everything this browser lacks; empty when it lacks nothing. */

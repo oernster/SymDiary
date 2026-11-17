@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { cannotRun, missing, needs, type Browser } from './capabilities'
 
 /** everything is a browser offering all the recorder needs. */
@@ -36,17 +36,19 @@ describe('what the recorder needs from the browser (FR-104)', () => {
     expect(lacking[0]).toMatch(new RegExp(`^${name},`))
   })
 
-  it('counts sharing as missing when the browser says it cannot share a file', () => {
+  // The defect this guards: a phone where Send works answered false here for a
+  // made-up file; the recorder then refused to start (Amendment 26).
+  it('never asks whether a file can be shared, only whether sharing exists', () => {
     const browser = everything()
-    browser.navigator.canShare = () => false
-    expect(missing(browser)).toEqual([expect.stringMatching(/^file sharing,/)])
+    const canShare = vi.fn(() => false)
+    browser.navigator.canShare = canShare
+    expect(missing(browser)).toEqual([])
+    expect(canShare).not.toHaveBeenCalled()
   })
 
-  it('counts sharing as missing when asking throws', () => {
+  it('counts sharing as missing when the browser offers no way to ask', () => {
     const browser = everything()
-    browser.navigator.canShare = () => {
-      throw new TypeError('files are not supported')
-    }
+    delete browser.navigator.canShare
     expect(missing(browser)).toEqual([expect.stringMatching(/^file sharing,/)])
   })
 

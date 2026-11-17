@@ -47,7 +47,20 @@ function pause(view: ReactDOM.Root) {
 
 async function open(root: HTMLElement) {
   const view = ReactDOM.createRoot(root)
-  // Before anything starts, so nothing is recorded that this browser could not keep or send (FR-104).
+  // First of all, ahead of every stop below: a page that stops can still take
+  // up the release that fixes whatever stopped it (FR-105, Amendment 26).
+  const worker = settled(
+    navigator.serviceWorker
+      ? navigator.serviceWorker.register(workerScript)
+      : Promise.reject(new Error('this browser keeps no service worker')),
+  )
+  // A refused registration is said on screen by RecorderApp (notOffline).
+  worker.then(
+    (registration) =>
+      keepUpToDate(navigator.serviceWorker, document, window, () => registration.update(), reload),
+    () => {},
+  )
+  // Before anything records, so nothing is kept that this browser could not keep or send (FR-104).
   const lacking = missing(window as unknown as Browser)
   if (lacking.length > 0) {
     stopped(view, cannotRun(lacking))
@@ -62,17 +75,6 @@ async function open(root: HTMLElement) {
     return
   }
   const loaded = settled(startGo(window as unknown as RecorderWindow))
-  const worker = settled(
-    navigator.serviceWorker
-      ? navigator.serviceWorker.register(workerScript)
-      : Promise.reject(new Error('this browser keeps no service worker')),
-  )
-  // A refused registration is already said on screen by RecorderApp (notOffline).
-  worker.then(
-    (registration) =>
-      keepUpToDate(navigator.serviceWorker, document, window, () => registration.update(), reload),
-    () => {},
-  )
   view.render(
     <React.StrictMode>
       <RecorderApp loaded={loaded} worker={worker} offers={offers} />
