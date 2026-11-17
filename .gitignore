@@ -36,6 +36,7 @@ go.work.sum
 # beside them are not.
 build/bin/
 frontend/dist/
+frontend/dist-recorder/
 frontend/node_modules/
 frontend/package.json.md5
 installer/build/bin/

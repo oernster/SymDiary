@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint .",
-    "build": "eslint . && tsc --noEmit && vite build",
+    "build": "eslint . && tsc --noEmit && vite build && npm run build:recorder",
+    "build:recorder": "vite build --config vite.recorder.config.ts",
     "preview": "vite preview",
     "test": "vitest run"
   },

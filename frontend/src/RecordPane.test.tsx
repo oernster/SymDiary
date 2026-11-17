@@ -68,6 +68,13 @@ describe('the recording form', () => {
     expect(await screen.findByText('Now')).toBeInTheDocument()
   })
 
+  it('cannot record while the rules are still loading (FR-100)', () => {
+    installBridge()
+    render(<RecordPane severities={severities} refused={vi.fn()} tell={vi.fn()} ready={false} />)
+    expect(screen.getByRole('button', { name: 'Record now' })).toBeDisabled()
+    expect(screen.getByLabelText('Symptom')).toBeEnabled()
+  })
+
   it('goes back to the current time when asked', async () => {
     paneWith(vi.fn())
     fireEvent.click(screen.getByRole('button', { name: 'Set a different time' }))

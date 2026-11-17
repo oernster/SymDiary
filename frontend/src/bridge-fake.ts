@@ -27,6 +27,10 @@ export interface FakeBridge {
   Import: ReturnType<typeof vi.fn>
   Donate: ReturnType<typeof vi.fn>
   SavePDF: ReturnType<typeof vi.fn>
+  Waiting: ReturnType<typeof vi.fn>
+  Prepare: ReturnType<typeof vi.fn>
+  Again: ReturnType<typeof vi.fn>
+  Confirm: ReturnType<typeof vi.fn>
 }
 
 export const severities = ['Mild', 'Moderate', 'Severe']
@@ -90,6 +94,10 @@ export function installBridge(answers: Partial<FakeBridge> = {}): FakeBridge {
     Import: vi.fn(refuse),
     Donate: vi.fn(refuse),
     SavePDF: vi.fn(refuse),
+    Waiting: vi.fn(() => Promise.resolve({ count: 0, oldest: '', hasBatch: false })),
+    Prepare: vi.fn(refuse),
+    Again: vi.fn(refuse),
+    Confirm: vi.fn(refuse),
     ...answers,
   } as FakeBridge
   ;(window as unknown as { go: unknown }).go = { main: { App: bridge } }

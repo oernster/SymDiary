@@ -11,7 +11,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'wailsjs/**', 'node_modules/**'],
+    ignores: ['dist/**', 'dist-recorder/**', 'wailsjs/**', 'node_modules/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

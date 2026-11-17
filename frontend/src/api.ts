@@ -124,6 +124,11 @@ interface Bridge {
   Import(): Promise<ImportResult>
   Donate(): Promise<void>
   SavePDF(from: string, to: string, appointment: string): Promise<string>
+  // The phone recorder's alone (Amendment 21): the desktop window never sends.
+  Waiting(): Promise<Waiting>
+  Prepare(): Promise<Parcel>
+  Again(): Promise<Parcel>
+  Confirm(ids: number[]): Promise<void>
 }
 
 interface WailsWindow {
@@ -138,9 +143,14 @@ export const noWindow = 'SymDiary is not running: this page needs its window.'
 
 const bridge = (): Bridge | null => (window as unknown as WailsWindow).go?.main?.App ?? null
 
+/** said is the words a refusal carries, whatever was thrown. */
+export function said(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason)
+}
+
 /** sentence turns a refusal from Go into something to show: a capital first letter. */
 export function sentence(reason: unknown): string {
-  const text = reason instanceof Error ? reason.message : String(reason)
+  const text = said(reason)
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
@@ -197,4 +207,10 @@ export const api = {
   // time; that is the document a reader hands to a doctor.
   savePDF: (from: string, to: string, appointment: string, refused: Refused) =>
     ask((b) => b.SavePDF(from, to, appointment), refused),
+  // The phone recorder hands its events to the desktop as a file through the
+  // share sheet (FR-089 to FR-097). Nothing is marked sent until confirm.
+  waiting: (refused: Refused) => ask((b) => b.Waiting(), refused),
+  prepare: (refused: Refused) => ask((b) => b.Prepare(), refused),
+  again: (refused: Refused) => ask((b) => b.Again(), refused),
+  confirm: (ids: number[], refused: Refused) => act((b) => b.Confirm(ids), refused),
 }
